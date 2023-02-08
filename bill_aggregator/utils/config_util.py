@@ -1,7 +1,6 @@
 import yaml
 
 from bill_aggregator import consts
-from bill_aggregator import exceptions
 
 
 def load_yaml_config(file=consts.DEFAULT_CONFIG_FILE):
