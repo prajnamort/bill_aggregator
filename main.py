@@ -33,13 +33,12 @@ def main():
         raise exceptions.BillAggregatorException(f'{workdir}: no such directory')
 
     # load and check config file
-    confs = config_util.load_yaml_configs(file=config_file)
-    config_util.check_configs(confs, workdir)
+    conf = config_util.load_yaml_config(file=config_file)
+    config_util.check_config(conf, workdir)
 
     # actual work begins here
-    for conf in confs:
-        aggregator = BillAggregator(conf=conf, workdir=workdir)
-        aggregator.aggregate()
+    aggregator = BillAggregator(conf=conf, workdir=workdir)
+    aggregator.aggregate()
 
 
 if __name__ == '__main__':

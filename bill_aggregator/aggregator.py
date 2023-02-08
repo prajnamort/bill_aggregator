@@ -7,6 +7,3 @@ class BillAggregator(object):
     def aggregate(self):
         print(self.conf)
         print(self.workdir)
-
-        if 'sub_directory' in self.conf:
-            agg_name = self.conf['sub_directory']
