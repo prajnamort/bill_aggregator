@@ -149,7 +149,14 @@ class CsvExtractor:
             row[RES_COL][TIME] = dt.time()
 
     def _sort_data_by_datetime(self):
-        pass
+        def _key(row):
+            return (row[RES_COL][DATE], row[RES_COL][TIME])
+
+        if _key(self.rows[0]) > _key(self.rows[-1]):
+            self.rows.reverse()
+        if not all(_key(self.rows[i]) <= _key(self.rows[i+1]) for i in range(len(self.rows) - 1)):
+            print('Sort performed')
+            self.rows.sort(key=_key)
 
     def process_data(self):
         """Start processing data in self.rows"""
@@ -165,4 +172,4 @@ class CsvExtractor:
 
         print(len(self.rows))
         for row in self.rows:
-            print(row[RES_COL])
+            print(row[RES_COL], row[self.file_conf[FIELDS][NAME][COL]])
