@@ -26,13 +26,13 @@ class ConfigValidator:
         Optional('encoding'): str,
         'has_header': bool,
         'columns': {
-            'date': str,
-            'name': str,
-            Optional('memo'): str,
+            'date': Or(str, int),
+            'name': Or(str, int),
+            Optional('memo'): Or(str, int),
             'amount': dict,    # amount_schema
         },
-        'extra_columns': {
-            str: str,
+        Optional('extra_columns'): {
+            str: Or(str, int),
         },
     })
 
