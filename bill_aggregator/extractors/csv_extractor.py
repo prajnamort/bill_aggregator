@@ -3,7 +3,9 @@ import pandas
 
 from charset_normalizer import from_path
 
-from bill_aggregator import consts
+from bill_aggregator.consts import (
+    MIN_BILL_COLUMNS, WARN_TRIM_ROW_COUNT, AmountFormat, RC,
+)
 from bill_aggregator import exceptions
 
 
@@ -41,7 +43,7 @@ class CsvExtractor:
             return
 
         column_count = max(len(row) for row in self.rows)
-        if column_count < consts.MIN_BILL_COLUMNS:
+        if column_count < MIN_BILL_COLUMNS:
             self.rows = []
             return
 
@@ -50,7 +52,7 @@ class CsvExtractor:
 
         new_row_count = len(self.rows)
         diff_row_count = orig_row_count - new_row_count
-        if diff_row_count >= consts.WARN_TRIM_ROW_COUNT:
+        if diff_row_count >= WARN_TRIM_ROW_COUNT:
             print(f'Trimed {diff_row_count} rows.')
 
     def strip_all_fields(self):
@@ -70,32 +72,26 @@ class CsvExtractor:
         else:
             self.data_rows = self.rows
 
-    def prepare_data(self):
-        self.read_csv_file()
-        self.update_column_count_and_trim_rows()
-        self.strip_all_fields()
-        self.seperate_header_and_data_rows()
-
     def check_config_against_data(self):
         ## Gather the columns which will be used
         check_columns = []
         # required columns
-        check_columns.append(self.file_conf['columns']['date'])
-        check_columns.append(self.file_conf['columns']['name'])
+        check_columns.append(self.file_conf['fields']['date']['column'])
+        check_columns.append(self.file_conf['fields']['name']['column'])
         # optional columns
-        if 'memo' in self.file_conf['columns']:
-            check_columns.append(self.file_conf['columns']['memo'])
+        if 'memo' in self.file_conf['fields']:
+            check_columns.append(self.file_conf['fields']['memo']['column'])
         # amount columns
-        amount_conf = self.file_conf['columns']['amount']
-        if amount_conf['format'] == consts.AmountFormat.OneColumnWithIndicators:
-            check_columns.append(amount_conf['amount_column'])
-            for idc_c in amount_conf['indicator_columns']:
-                check_columns.append(idc_c['column_name'])
-        elif amount_conf['format'] == consts.AmountFormat.OneColumnWithSign:
-            check_columns.append(amount_conf['amount_column'])
+        amount_conf = self.file_conf['fields']['amount']
+        if amount_conf['format'] == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
+            check_columns.append(amount_conf['column'])
+            for idc_c in amount_conf['indicators']:
+                check_columns.append(idc_c['column'])
+        elif amount_conf['format'] == AmountFormat.ONE_COLUMN_WITH_SIGN:
+            check_columns.append(amount_conf['column'])
         # extra columns
-        if 'extra_columns' in self.file_conf:
-            check_columns.extend(self.file_conf['extra_columns'].values())
+        if 'extra_fields' in self.file_conf:
+            check_columns.extend(fc['column'] for fc in self.file_conf['extra_fields'].values())
 
         ## Check if these columns actually exists
         for col in check_columns:
@@ -111,25 +107,35 @@ class CsvExtractor:
             else:
                 raise exceptions.BillAggregatorException('Unrecognized column indicator')
 
-    def load_data(self):
+    def prepare_data(self):
+        self.read_csv_file()
+        self.update_column_count_and_trim_rows()
+        self.strip_all_fields()
+        self.seperate_header_and_data_rows()
+        self.check_config_against_data()
+
         self.data = pandas.DataFrame(
             data=self.data_rows,
             columns=self.header_row)
+        self.data[RC] = [{} for _ in range(len(self.data))]
 
-    def process_date(self):
-        date_col = self.file_conf['columns']['date']
-        for date_str in self.data[date_col]:
-            print(pandas.to_datetime(date_str))
+    def process_date_field(self):
+        date_conf = self.file_conf['fields']['date']
+        date_col = date_conf['column']
+
+        kwargs = {}
+        if 'dayfirst' in date_conf:
+            kwargs['dayfirst'] = date_conf['dayfirst']
+
+        self.data[date_col] = pandas.to_datetime(self.data[date_col], **kwargs)
 
     def process_data(self):
-        self.process_date()
+        self.process_date_field()
 
     def extract_bills(self):
         print(f'Handling file: {self.file.name}')
 
         self.prepare_data()
-        self.check_config_against_data()
-        self.load_data()
         self.process_data()
 
         print(len(self.data_rows))

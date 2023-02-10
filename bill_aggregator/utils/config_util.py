@@ -25,14 +25,23 @@ class ConfigValidator:
     csv_file_config_schema = Schema({
         Optional('encoding'): str,
         'has_header': bool,
-        'columns': {
-            'date': Or(str, int),
-            'name': Or(str, int),
-            Optional('memo'): Or(str, int),
+        'fields': {
+            'date': {
+                'column': Or(str, int),
+                Optional('dayfirst'): bool,
+            },
+            'name': {
+                'column': Or(str, int),
+            },
+            Optional('memo'): {
+                'column': Or(str, int),
+            },
             'amount': dict,    # amount_schema
         },
-        Optional('extra_columns'): {
-            str: Or(str, int),
+        Optional('extra_fields'): {
+            str: {
+                'column': Or(str, int),
+            },
         },
     })
 
