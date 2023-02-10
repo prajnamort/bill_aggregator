@@ -1,10 +1,13 @@
 import yaml
 from schema import Schema, Or, Optional, SchemaError
 
-from bill_aggregator import consts
+from bill_aggregator.consts import (
+    DEFAULT_CONFIG_FILE, FileType,
+    FIELDS, EXT_FIELDS, COL, DATE, TIME, NAME, MEMO, AMT,
+)
 
 
-def load_yaml_config(file=consts.DEFAULT_CONFIG_FILE):
+def load_yaml_config(file=DEFAULT_CONFIG_FILE):
     with open(file, 'r') as f:
         return yaml.safe_load(f)
 
@@ -17,7 +20,7 @@ class ConfigValidator:
     bill_group_schema = Schema({
         'account': str,
         Optional('aggregation'): str,
-        'file_type': Or(consts.FileType.CSV),
+        'file_type': Or(FileType.CSV),
         'file_config': dict,    # csv_file_config_schema
         Optional('final_memo'): [str],
     })
@@ -25,22 +28,25 @@ class ConfigValidator:
     csv_file_config_schema = Schema({
         Optional('encoding'): str,
         'has_header': bool,
-        'fields': {
-            'date': {
-                'column': Or(str, int),
-                Optional('dayfirst'): bool,
+        FIELDS: {
+            DATE: {
+                COL: Or(str, int),
+                Optional('date_order'): str,
             },
-            'name': {
-                'column': Or(str, int),
+            Optional(TIME): {
+                COL: Or(str, int),
             },
-            Optional('memo'): {
-                'column': Or(str, int),
+            NAME: {
+                COL: Or(str, int),
             },
-            'amount': dict,    # amount_schema
+            Optional(MEMO): {
+                COL: Or(str, int),
+            },
+            AMT: dict,    # amount_schema
         },
-        Optional('extra_fields'): {
+        Optional(EXT_FIELDS): {
             str: {
-                'column': Or(str, int),
+                COL: Or(str, int),
             },
         },
     })
@@ -60,7 +66,7 @@ class ConfigValidator:
     def validate_bill_group_config(cls, bill_group_conf):
         cls.bill_group_schema.validate(bill_group_conf)
         file_type = bill_group_conf['file_type']
-        if file_type == consts.FileType.CSV:
+        if file_type == FileType.CSV:
             cls.validate_csv_file_config(bill_group_conf['file_config'])
 
     @classmethod

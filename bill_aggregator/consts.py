@@ -1,9 +1,22 @@
+# Default config
 DEFAULT_CONFIG_FILE = 'my_bills/config.yaml'
 DEFAULT_AGGREGATION = 'result'
 
-RC = 999  # Result column number
+# Other configs
 MIN_BILL_COLUMNS = 3
 WARN_TRIM_ROW_COUNT = 10
+
+
+# Common macros used across the project
+FIELDS = 'fields'
+EXT_FIELDS = 'extra_fields'
+COL = 'column'
+DATE = 'date'
+TIME = 'time'
+NAME = 'name'
+MEMO = 'memo'
+AMT = 'amount'
+AMT_TYPE = 'amount_type'
 
 
 class FileType:

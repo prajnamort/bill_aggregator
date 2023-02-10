@@ -2,4 +2,4 @@ ipython==8.9.0
 PyYAML==6.0
 schema==0.7.5
 charset-normalizer==3.0.1
-pandas==1.5.3
+dateparser==1.1.7

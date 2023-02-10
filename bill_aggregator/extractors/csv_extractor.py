@@ -1,12 +1,16 @@
 import csv
-import pandas
+import dateparser
 
 from charset_normalizer import from_path
 
 from bill_aggregator.consts import (
-    MIN_BILL_COLUMNS, WARN_TRIM_ROW_COUNT, AmountFormat, RC,
+    MIN_BILL_COLUMNS, WARN_TRIM_ROW_COUNT, AmountFormat,
+    FIELDS, EXT_FIELDS, COL, DATE, TIME, NAME, MEMO, AMT,
 )
 from bill_aggregator import exceptions
+
+
+RES_COL = -1    # Column for storing temporary results
 
 
 class CsvExtractor:
@@ -19,10 +23,8 @@ class CsvExtractor:
         self.column_count = 0
         self.has_header = self.file_conf['has_header']
         self.header_row = None
-        self.data_rows = None
-        self.data = None
 
-    def read_csv_file(self):
+    def _read_csv_file(self):
         """Read original csv file into self.rows"""
         encoding = self.file_conf.get('encoding')
         if not encoding:
@@ -36,7 +38,7 @@ class CsvExtractor:
             csvreader = csv.reader(f)
             self.rows = list(csvreader)
 
-    def update_column_count_and_trim_rows(self):
+    def _update_column_count_and_trim_rows(self):
         """Update column_count, and trim rows"""
         orig_row_count = len(self.rows)
         if not orig_row_count:
@@ -55,88 +57,112 @@ class CsvExtractor:
         if diff_row_count >= WARN_TRIM_ROW_COUNT:
             print(f'Trimed {diff_row_count} rows.')
 
-    def strip_all_fields(self):
+    def _strip_all_fields(self):
         """Trim all fields, in both header and data rows."""
         results = []
         for row in self.rows:
             results.append([f.strip() for f in row])
         self.rows = results
 
-    def seperate_header_and_data_rows(self):
-        """Seperate header_row and data_rows, if header exists."""
-        if self.has_header:
-            if not self.rows:
-                raise exceptions.BillAggregatorException('No valid rows')
-            self.header_row = self.rows[0]
-            self.data_rows = self.rows[1:]
-        else:
-            self.data_rows = self.rows
+    def _seperate_header_row(self):
+        """Seperate header and data rows, if header exists."""
+        if not self.has_header:
+            return
 
-    def check_config_against_data(self):
-        ## Gather the columns which will be used
-        check_columns = []
+        if not self.rows:
+            raise exceptions.BillAggregatorException('No valid rows')
+        self.header_row = self.rows[0]
+        self.rows = self.rows[1:]
+
+    def _check_column(self, col):
+        """Check if column exist, return column number as integer."""
+        if isinstance(col, int):
+            if col >= self.column_count:
+                raise exceptions.BillAggregatorException(f'No such column: {col}')
+            return col
+        elif isinstance(col, str):
+            match_column_count = self.header_row.count(col)
+            if match_column_count == 0:
+                raise exceptions.BillAggregatorException(f'No such column: {col}')
+            elif match_column_count >= 2:
+                raise exceptions.BillAggregatorException(f'Multiple Column exists: {col}')
+            return self.header_row.index(col)
+        raise exceptions.BillAggregatorException('Unrecognized column indicator')
+
+    def _check_and_update_config(self):
+        """Check config against the actual data, update config if needed."""
         # required columns
-        check_columns.append(self.file_conf['fields']['date']['column'])
-        check_columns.append(self.file_conf['fields']['name']['column'])
+        self.file_conf[FIELDS][DATE][COL] = self._check_column(
+            self.file_conf[FIELDS][DATE][COL])
+        self.file_conf[FIELDS][NAME][COL] = self._check_column(
+            self.file_conf[FIELDS][NAME][COL])
         # optional columns
-        if 'memo' in self.file_conf['fields']:
-            check_columns.append(self.file_conf['fields']['memo']['column'])
+        if TIME in self.file_conf[FIELDS]:
+            self.file_conf[FIELDS][TIME][COL] = self._check_column(
+                self.file_conf[FIELDS][TIME][COL])
+        if MEMO in self.file_conf[FIELDS]:
+            self.file_conf[FIELDS][MEMO][COL] = self._check_column(
+                self.file_conf[FIELDS][MEMO][COL])
         # amount columns
-        amount_conf = self.file_conf['fields']['amount']
-        if amount_conf['format'] == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
-            check_columns.append(amount_conf['column'])
-            for idc_c in amount_conf['indicators']:
-                check_columns.append(idc_c['column'])
-        elif amount_conf['format'] == AmountFormat.ONE_COLUMN_WITH_SIGN:
-            check_columns.append(amount_conf['column'])
+        amount_c = self.file_conf[FIELDS][AMT]
+        if amount_c['format'] == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
+            amount_c[COL] = self._check_column(amount_c[COL])
+            for indicator_c in amount_c['indicators']:
+                indicator_c[COL] = self._check_column(indicator_c[COL])
+        elif amount_c['format'] == AmountFormat.ONE_COLUMN_WITH_SIGN:
+            amount_c[COL] = self._check_column(amount_c[COL])
         # extra columns
-        if 'extra_fields' in self.file_conf:
-            check_columns.extend(fc['column'] for fc in self.file_conf['extra_fields'].values())
-
-        ## Check if these columns actually exists
-        for col in check_columns:
-            if isinstance(col, int):
-                if col >= self.column_count:
-                    raise exceptions.BillAggregatorException(f'No such column: {col}')
-            elif isinstance(col, str):
-                match_column_count = self.header_row.count(col)
-                if match_column_count == 0:
-                    raise exceptions.BillAggregatorException(f'No such column: {col}')
-                elif match_column_count >= 2:
-                    raise exceptions.BillAggregatorException(f'Multiple Column exists: {col}')
-            else:
-                raise exceptions.BillAggregatorException('Unrecognized column indicator')
+        if EXT_FIELDS in self.file_conf:
+            for field_c in self.file_conf[EXT_FIELDS].values():
+                field_c[COL] = self._check_column(field_c[COL])
 
     def prepare_data(self):
-        self.read_csv_file()
-        self.update_column_count_and_trim_rows()
-        self.strip_all_fields()
-        self.seperate_header_and_data_rows()
-        self.check_config_against_data()
+        """Read data from csv file, and get them prepared in self.rows"""
+        self._read_csv_file()
+        self._update_column_count_and_trim_rows()
+        self._strip_all_fields()
+        self._seperate_header_row()
+        self._check_and_update_config()
 
-        self.data = pandas.DataFrame(
-            data=self.data_rows,
-            columns=self.header_row)
-        self.data[RC] = [{} for _ in range(len(self.data))]
+        for row in self.rows:
+            row.append({})    # append result column
 
-    def process_date_field(self):
-        date_conf = self.file_conf['fields']['date']
-        date_col = date_conf['column']
+    def _process_date_time_fields(self):
+        date_conf = self.file_conf[FIELDS][DATE]
+        date_col = date_conf[COL]
+        time_col = None
+        parser_settings = {}
+        if TIME in self.file_conf[FIELDS]:
+            time_col = self.file_conf[FIELDS][TIME][COL]
+        if 'date_order' in date_conf:
+            parser_settings['DATE_ORDER'] = date_conf['date_order']
 
-        kwargs = {}
-        if 'dayfirst' in date_conf:
-            kwargs['dayfirst'] = date_conf['dayfirst']
+        for row in self.rows:
+            if time_col is None:
+                dt_str = f'{row[date_col]}'
+            else:
+                dt_str = f'{row[date_col]} {row[time_col]}'
+            dt = dateparser.parse(dt_str, settings=parser_settings)
+            if dt is None:
+                raise exceptions.BillAggregatorException(f'Cannot parse date: {row[date_col]}')
+            row[RES_COL][DATE] = dt.date()
+            row[RES_COL][TIME] = dt.time()
 
-        self.data[date_col] = pandas.to_datetime(self.data[date_col], **kwargs)
+    def _sort_data_by_datetime(self):
+        pass
 
     def process_data(self):
-        self.process_date_field()
+        """Start processing data in self.rows"""
+        self._process_date_time_fields()
+        self._sort_data_by_datetime()
 
     def extract_bills(self):
+        """Main entry point for this Extractor"""
         print(f'Handling file: {self.file.name}')
 
         self.prepare_data()
         self.process_data()
 
-        print(len(self.data_rows))
-        print(self.data.size)
+        print(len(self.rows))
+        for row in self.rows:
+            print(row[RES_COL])
