@@ -1,7 +1,28 @@
+# python
 __pycache__/
-
-config.ini
+*.py[cod]
+*$py.class
 
 # direnv
 .envrc
 .direnv/
+
+# vscode
+.vscode/
+
+# emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# vim
+Session.vim
+Sessionx.vim
+
+# tmp
+/tmp/

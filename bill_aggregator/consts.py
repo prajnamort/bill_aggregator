@@ -11,6 +11,8 @@ WARN_TRIM_ROW_COUNT = 10
 FIELDS = 'fields'
 EXT_FIELDS = 'extra_fields'
 COL = 'column'
+FORMAT = 'format'
+
 DATE = 'date'
 TIME = 'time'
 NAME = 'name'
@@ -26,3 +28,9 @@ class FileType:
 class AmountFormat:
     ONE_COLUMN_WITH_INDICATORS = 'OneColumnWithIndicators'
     ONE_COLUMN_WITH_SIGN = 'OneColumnWithSign'
+
+
+class AmountType:
+    IN = 'in'
+    OUT = 'out'
+    UNKNOWN = 'unknown'

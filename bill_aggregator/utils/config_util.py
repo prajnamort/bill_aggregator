@@ -2,9 +2,10 @@ import yaml
 from schema import Schema, Or, Optional, SchemaError
 
 from bill_aggregator.consts import (
-    DEFAULT_CONFIG_FILE, FileType,
-    FIELDS, EXT_FIELDS, COL, DATE, TIME, NAME, MEMO, AMT,
+    DEFAULT_CONFIG_FILE, FileType, AmountFormat,
+    FIELDS, EXT_FIELDS, COL, FORMAT, DATE, TIME, NAME, MEMO, AMT,
 )
+from bill_aggregator.exceptions import BillAggregatorException
 
 
 def load_yaml_config(file=DEFAULT_CONFIG_FILE):
@@ -42,13 +43,28 @@ class ConfigValidator:
             Optional(MEMO): {
                 COL: Or(str, int),
             },
-            AMT: dict,    # amount_schema
+            AMT: dict,    # one_col_with_idcs_amt_schema, one_col_with_sign_amt_schema
         },
         Optional(EXT_FIELDS): {
             str: {
                 COL: Or(str, int),
             },
         },
+    })
+
+    one_col_with_idcs_amt_schema = Schema({
+        FORMAT: AmountFormat.ONE_COLUMN_WITH_INDICATORS,
+        COL: Or(str, int),
+        'indicators': [{
+            COL: Or(str, int),
+            'inbound_value': str,
+            'outbound_value': str,
+        }],
+    })
+
+    one_col_with_sign_amt_schema = Schema({
+        FORMAT: AmountFormat.ONE_COLUMN_WITH_SIGN,
+        COL: Or(str, int),
     })
 
     @classmethod
@@ -72,3 +88,17 @@ class ConfigValidator:
     @classmethod
     def validate_csv_file_config(cls, file_conf):
         cls.csv_file_config_schema.validate(file_conf)
+        amt_conf = file_conf[FIELDS][AMT]
+        cls.validate_amt_config(amt_conf)
+
+    @classmethod
+    def validate_amt_config(cls, amt_conf):
+        if FORMAT not in amt_conf:
+            raise BillAggregatorException('format must be specified for amount field')
+        amt_format = amt_conf[FORMAT]
+        if amt_format == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
+            cls.one_col_with_idcs_amt_schema.validate(amt_conf)
+        elif amt_format == AmountFormat.ONE_COLUMN_WITH_SIGN:
+            cls.one_col_with_sign_amt_schema.validate(amt_conf)
+        else:
+            raise BillAggregatorException(f'invalid format for amount field: {amt_format}')

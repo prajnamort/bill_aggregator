@@ -4,10 +4,11 @@ import dateparser
 from charset_normalizer import from_path
 
 from bill_aggregator.consts import (
-    MIN_BILL_COLUMNS, WARN_TRIM_ROW_COUNT, AmountFormat,
-    FIELDS, EXT_FIELDS, COL, DATE, TIME, NAME, MEMO, AMT,
+    MIN_BILL_COLUMNS, WARN_TRIM_ROW_COUNT, AmountFormat, AmountType,
+    FIELDS, EXT_FIELDS, COL, FORMAT, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE
 )
-from bill_aggregator import exceptions
+from bill_aggregator.exceptions import BillAggregatorException
+from bill_aggregator.utils import amount_util
 
 
 RES_COL = -1    # Column for storing temporary results
@@ -30,7 +31,7 @@ class CsvExtractor:
         if not encoding:
             result = from_path(self.file).best()
             if not result:
-                raise exceptions.BillAggregatorException('Cannot detect encoding')
+                raise BillAggregatorException('Cannot detect encoding')
             print(f'Detected encoding: {result.encoding}, confidence: {1.0 - result.chaos}')
             encoding = result.encoding
 
@@ -70,7 +71,7 @@ class CsvExtractor:
             return
 
         if not self.rows:
-            raise exceptions.BillAggregatorException('No valid rows')
+            raise BillAggregatorException('No valid rows')
         self.header_row = self.rows[0]
         self.rows = self.rows[1:]
 
@@ -78,16 +79,16 @@ class CsvExtractor:
         """Check if column exist, return column number as integer."""
         if isinstance(col, int):
             if col >= self.column_count:
-                raise exceptions.BillAggregatorException(f'No such column: {col}')
+                raise BillAggregatorException(f'No such column: {col}')
             return col
         elif isinstance(col, str):
             match_column_count = self.header_row.count(col)
             if match_column_count == 0:
-                raise exceptions.BillAggregatorException(f'No such column: {col}')
+                raise BillAggregatorException(f'No such column: {col}')
             elif match_column_count >= 2:
-                raise exceptions.BillAggregatorException(f'Multiple Column exists: {col}')
+                raise BillAggregatorException(f'Multiple Column exists: {col}')
             return self.header_row.index(col)
-        raise exceptions.BillAggregatorException('Unrecognized column indicator')
+        raise BillAggregatorException('Unrecognized column indicator')
 
     def _check_and_update_config(self):
         """Check config against the actual data, update config if needed."""
@@ -144,7 +145,7 @@ class CsvExtractor:
                 dt_str = f'{row[date_col]} {row[time_col]}'
             dt = dateparser.parse(dt_str, settings=parser_settings)
             if dt is None:
-                raise exceptions.BillAggregatorException(f'Cannot parse date: {row[date_col]}')
+                raise BillAggregatorException(f'Cannot parse date: {row[date_col]}')
             row[RES_COL][DATE] = dt.date()
             row[RES_COL][TIME] = dt.time()
 
@@ -172,12 +173,59 @@ class CsvExtractor:
             for row in self.rows:
                 row[RES_COL][MEMO] = ''
 
+    def _process_one_col_with_idcs_amt_fields(self):
+        amt_conf = self.file_conf[FIELDS][AMT]
+        amt_col = amt_conf[COL]
+        idc_confs = amt_conf['indicators']
+
+        for row in self.rows:
+            amount = amount_util.convert_amount_to_decimal(row[amt_col])
+            amount_type = AmountType.UNKNOWN
+            for idc_conf in idc_confs:
+                idc_col = idc_conf[COL]
+                if row[idc_col] == idc_conf['inbound_value']:
+                    amount_type = AmountType.IN
+                    break
+                elif row[idc_col] == idc_conf['outbound_value']:
+                    amount_type = AmountType.OUT
+                    break
+
+            if amount_type == AmountType.IN:
+                amount.copy_sign(amount_util.POS)
+            elif amount_type == AmountType.OUT:
+                amount.copy_sign(amount_util.NEG)
+            row[RES_COL][AMT] = amount
+            row[RES_COL][AMT_TYPE] = amount_type
+
+    def _process_one_col_with_sign_amt_fields(self):
+        amt_conf = self.file_conf[FIELDS][AMT]
+        amt_col = amt_conf[COL]
+
+        for row in self.rows:
+            amount = amount_util.convert_amount_to_decimal(row[amt_col])
+            if amount.is_signed():
+                amount_type = AmountType.OUT
+            else:
+                amount_type = AmountType.IN
+            row[RES_COL][AMT] = amount
+            row[RES_COL][AMT_TYPE] = amount_type
+
+    def _process_amount_fields(self):
+        amt_format = self.file_conf[FIELDS][AMT][FORMAT]
+        if amt_format == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
+            self._process_one_col_with_idcs_amt_fields()
+        elif amt_format == AmountFormat.ONE_COLUMN_WITH_SIGN:
+            self._process_one_col_with_sign_amt_fields()
+        else:
+            raise BillAggregatorException(f'invalid amount format: {amt_format}')
+
     def process_data(self):
         """Start processing data in self.rows"""
         self._process_date_time_fields()
         self._sort_data_by_datetime()
         self._process_name_field()
         self._process_memo_field()
+        self._process_amount_fields()
 
     def extract_bills(self):
         """Main entry point for this Extractor"""
