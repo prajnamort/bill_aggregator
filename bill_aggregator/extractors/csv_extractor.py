@@ -219,6 +219,14 @@ class CsvExtractor:
         else:
             raise BillAggregatorException(f'invalid amount format: {amt_format}')
 
+    def _process_extra_fields(self):
+        if EXT_FIELDS not in self.file_conf:
+            return
+        for row in self.rows:
+            for field_name, field_conf in self.file_conf[EXT_FIELDS].items():
+                field_value = row[field_conf[COL]]
+                row[RES_COL][field_name] = field_value
+
     def process_data(self):
         """Start processing data in self.rows"""
         self._process_date_time_fields()
@@ -226,6 +234,7 @@ class CsvExtractor:
         self._process_name_field()
         self._process_memo_field()
         self._process_amount_fields()
+        self._process_extra_fields()
 
     def extract_bills(self):
         """Main entry point for this Extractor"""
