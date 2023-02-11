@@ -158,10 +158,26 @@ class CsvExtractor:
             print('Sort performed')
             self.rows.sort(key=_key)
 
+    def _process_name_field(self):
+        name_col = self.file_conf[FIELDS][NAME][COL]
+        for row in self.rows:
+            row[RES_COL][NAME] = row[name_col]
+
+    def _process_memo_field(self):
+        if MEMO in self.file_conf[FIELDS]:
+            memo_col = self.file_conf[FIELDS][MEMO][COL]
+            for row in self.rows:
+                row[RES_COL][MEMO] = row[memo_col]
+        else:
+            for row in self.rows:
+                row[RES_COL][MEMO] = ''
+
     def process_data(self):
         """Start processing data in self.rows"""
         self._process_date_time_fields()
         self._sort_data_by_datetime()
+        self._process_name_field()
+        self._process_memo_field()
 
     def extract_bills(self):
         """Main entry point for this Extractor"""
@@ -172,4 +188,4 @@ class CsvExtractor:
 
         print(len(self.rows))
         for row in self.rows:
-            print(row[RES_COL], row[self.file_conf[FIELDS][NAME][COL]])
+            print(row[RES_COL])
