@@ -27,6 +27,6 @@ class BillAggregator:
             extractor = ExtractorCls(file=file, file_conf=file_config)
             extractor.extract_bills()
 
-    def aggregate(self):
+    def aggregate_bills(self):
         for bill_group_conf in self.bill_group_confs:
             self.handle_bill_group(bill_group_conf)

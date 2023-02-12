@@ -24,6 +24,7 @@ class CsvExtractor:
         self.column_count = 0
         self.has_header = self.file_conf['has_header']
         self.header_row = None
+        self.results = []
 
     def _read_csv_file(self):
         """Read original csv file into self.rows"""
@@ -117,17 +118,6 @@ class CsvExtractor:
             for field_c in self.file_conf[EXT_FIELDS].values():
                 field_c[COL] = self._check_column(field_c[COL])
 
-    def prepare_data(self):
-        """Read data from csv file, and get them prepared in self.rows"""
-        self._read_csv_file()
-        self._update_column_count_and_trim_rows()
-        self._strip_all_fields()
-        self._seperate_header_row()
-        self._check_and_update_config()
-
-        for row in self.rows:
-            row.append({})    # append result column
-
     def _process_date_time_fields(self):
         date_conf = self.file_conf[FIELDS][DATE]
         date_col = date_conf[COL]
@@ -157,7 +147,7 @@ class CsvExtractor:
             self.rows.reverse()
         if not all(_key(self.rows[i]) <= _key(self.rows[i+1]) for i in range(len(self.rows) - 1)):
             print('Sort performed')
-            self.rows.sort(key=_key)
+            self.rows.sort(key=_key)    # stable sort (if same key, preserve order)
 
     def _process_name_field(self):
         name_col = self.file_conf[FIELDS][NAME][COL]
@@ -227,14 +217,28 @@ class CsvExtractor:
                 field_value = row[field_conf[COL]]
                 row[RES_COL][field_name] = field_value
 
+    def prepare_data(self):
+        """Read data from csv file, and get them prepared in self.rows"""
+        self._read_csv_file()
+        self._update_column_count_and_trim_rows()
+        self._strip_all_fields()
+        self._seperate_header_row()
+        self._check_and_update_config()
+
+        for row in self.rows:
+            row.append({})    # append result column
+
     def process_data(self):
-        """Start processing data in self.rows"""
+        """Process data in self.rows, then put them in self.results"""
         self._process_date_time_fields()
         self._sort_data_by_datetime()
         self._process_name_field()
         self._process_memo_field()
         self._process_amount_fields()
         self._process_extra_fields()
+
+        for row in self.rows:
+            self.results.append(row[RES_COL])
 
     def extract_bills(self):
         """Main entry point for this Extractor"""
@@ -243,6 +247,6 @@ class CsvExtractor:
         self.prepare_data()
         self.process_data()
 
-        print(len(self.rows))
-        for row in self.rows:
-            print(row[RES_COL])
+        print(len(self.results))
+        for row in self.results:
+            print(row)

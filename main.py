@@ -38,7 +38,7 @@ def main():
 
     # actual work begins here
     aggregator = BillAggregator(conf=conf, workdir=workdir)
-    aggregator.aggregate()
+    aggregator.aggregate_bills()
 
 
 if __name__ == '__main__':
