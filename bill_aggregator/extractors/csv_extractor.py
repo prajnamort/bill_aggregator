@@ -192,9 +192,9 @@ class CsvExtractor:
                     break
 
             if amount_type == AmountType.IN:
-                amount.copy_sign(amount_util.POS)
+                amount = amount.copy_sign(amount_util.POS)
             elif amount_type == AmountType.OUT:
-                amount.copy_sign(amount_util.NEG)
+                amount = amount.copy_sign(amount_util.NEG)
             row[RES_COL][AMT] = amount
             row[RES_COL][AMT_TYPE] = amount_type
 
@@ -202,12 +202,18 @@ class CsvExtractor:
         amt_conf = self.file_conf[FIELDS][AMT]
         amt_col = amt_conf[COL]
 
+        reverse_sign = False
+        if 'is_outbound_positive' in amt_conf:
+            reverse_sign = amt_conf['is_outbound_positive']
+
         for row in self.rows:
             amount = amount_util.convert_amount_to_decimal(row[amt_col])
-            if amount.is_signed():
+            if bool(amount.is_signed()) ^ bool(reverse_sign):
                 amount_type = AmountType.OUT
+                amount = amount.copy_sign(amount_util.NEG)
             else:
                 amount_type = AmountType.IN
+                amount = amount.copy_sign(amount_util.POS)
             row[RES_COL][AMT] = amount
             row[RES_COL][AMT_TYPE] = amount_type
 

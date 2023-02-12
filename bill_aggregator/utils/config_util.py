@@ -66,6 +66,7 @@ class ConfigValidator:
     one_col_with_sign_amt_schema = Schema({
         FORMAT: AmountFormat.ONE_COLUMN_WITH_SIGN,
         COL: Or(str, int),
+        Optional('is_outbound_positive'): bool,
     })
 
     @classmethod
