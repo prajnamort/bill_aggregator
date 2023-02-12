@@ -32,7 +32,8 @@ class ConfigValidator:
         FIELDS: {
             DATE: {
                 COL: Or(str, int, [Or(str, int)]),
-                Optional('date_order'): str,
+                Optional('dayfirst'): bool,
+                Optional('yearfirst'): bool,
             },
             Optional(TIME): {
                 COL: Or(str, int),

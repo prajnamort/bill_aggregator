@@ -1,5 +1,5 @@
 import csv
-import dateparser
+import dateutil.parser
 
 from charset_normalizer import from_path
 
@@ -124,11 +124,15 @@ class CsvExtractor:
         date_conf = self.file_conf[FIELDS][DATE]
         date_cols = date_conf[COL]
         time_col = None
-        parser_settings = {}
         if TIME in self.file_conf[FIELDS]:
             time_col = self.file_conf[FIELDS][TIME][COL]
-        if 'date_order' in date_conf:
-            parser_settings['DATE_ORDER'] = date_conf['date_order']
+
+        dayfirst = None
+        yearfirst = None
+        if 'dayfirst' in date_conf:
+            dayfirst = date_conf['dayfirst']
+        if 'yearfirst' in date_conf:
+            yearfirst = date_conf['yearfirst']
 
         for row in self.rows:
             if isinstance(date_cols, list):
@@ -142,9 +146,7 @@ class CsvExtractor:
                 dt_str = f'{row[date_col]}'
             else:
                 dt_str = f'{row[date_col]} {row[time_col]}'
-            dt = dateparser.parse(dt_str, settings=parser_settings)
-            if dt is None:
-                raise BillAggregatorException(f'Cannot parse date: {row[date_col]}')
+            dt = dateutil.parser.parse(dt_str, dayfirst=dayfirst, yearfirst=yearfirst)
             row[RES_COL][DATE] = dt.date()
             row[RES_COL][TIME] = dt.time()
 
