@@ -89,6 +89,8 @@ class CsvExtractor:
             elif match_column_count >= 2:
                 raise BillAggregatorException(f'Multiple Column exists: {col}')
             return self.header_row.index(col)
+        elif isinstance(col, list):
+            return [self._check_column(c) for c in col]
         raise BillAggregatorException('Unrecognized column indicator')
 
     def _check_and_update_config(self):
@@ -120,7 +122,7 @@ class CsvExtractor:
 
     def _process_date_time_fields(self):
         date_conf = self.file_conf[FIELDS][DATE]
-        date_col = date_conf[COL]
+        date_cols = date_conf[COL]
         time_col = None
         parser_settings = {}
         if TIME in self.file_conf[FIELDS]:
@@ -129,6 +131,13 @@ class CsvExtractor:
             parser_settings['DATE_ORDER'] = date_conf['date_order']
 
         for row in self.rows:
+            if isinstance(date_cols, list):
+                date_col = next((col for col in date_cols if row[col]), None)
+                if date_col is None:
+                    raise BillAggregatorException('No valid date column')
+            else:
+                date_col = date_cols
+
             if time_col is None:
                 dt_str = f'{row[date_col]}'
             else:
@@ -246,7 +255,3 @@ class CsvExtractor:
 
         self.prepare_data()
         self.process_data()
-
-        print(len(self.results))
-        for row in self.results:
-            print(row)

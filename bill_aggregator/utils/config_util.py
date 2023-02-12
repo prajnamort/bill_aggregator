@@ -3,7 +3,7 @@ from schema import Schema, Or, Optional, SchemaError
 
 from bill_aggregator.consts import (
     DEFAULT_CONFIG_FILE, FileType, AmountFormat,
-    FIELDS, EXT_FIELDS, COL, FORMAT, DATE, TIME, NAME, MEMO, AMT,
+    FIELDS, EXT_FIELDS, COL, FORMAT, ACCT, AGG, DATE, TIME, NAME, MEMO, AMT,
 )
 from bill_aggregator.exceptions import BillAggregatorException
 
@@ -19,8 +19,8 @@ class ConfigValidator:
     })
 
     bill_group_schema = Schema({
-        'account': str,
-        Optional('aggregation'): str,
+        ACCT: str,
+        Optional(AGG): str,
         'file_type': Or(FileType.CSV),
         'file_config': dict,    # csv_file_config_schema
         Optional('final_memo'): [str],
@@ -31,7 +31,7 @@ class ConfigValidator:
         'has_header': bool,
         FIELDS: {
             DATE: {
-                COL: Or(str, int),
+                COL: Or(str, int, [Or(str, int)]),
                 Optional('date_order'): str,
             },
             Optional(TIME): {

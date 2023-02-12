@@ -5,6 +5,7 @@ DEFAULT_AGGREGATION = 'result'
 # Other configs
 MIN_BILL_COLUMNS = 3
 WARN_TRIM_ROW_COUNT = 10
+FINAL_MEMO_SEPARATOR = '; '
 
 
 # Common macros used across the project
@@ -13,6 +14,8 @@ EXT_FIELDS = 'extra_fields'
 COL = 'column'
 FORMAT = 'format'
 
+ACCT = 'account'
+AGG = 'aggregation'
 DATE = 'date'
 TIME = 'time'
 NAME = 'name'
