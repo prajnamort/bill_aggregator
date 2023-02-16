@@ -113,12 +113,15 @@ class CsvExtractor:
                 self.file_conf[FIELDS][MEMO][COL])
         # amount columns
         amount_c = self.file_conf[FIELDS][AMT]
-        if amount_c['format'] == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
+        if amount_c[FORMAT] == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
             amount_c[COL] = self._check_column(amount_c[COL])
             for indicator_c in amount_c['indicators']:
                 indicator_c[COL] = self._check_column(indicator_c[COL])
-        elif amount_c['format'] == AmountFormat.ONE_COLUMN_WITH_SIGN:
+        elif amount_c[FORMAT] == AmountFormat.ONE_COLUMN_WITH_SIGN:
             amount_c[COL] = self._check_column(amount_c[COL])
+        elif amount_c[FORMAT] == AmountFormat.TWO_COLUMNS:
+            amount_c[COL]['inbound'] = self._check_column(amount_c[COL]['inbound'])
+            amount_c[COL]['outbound'] = self._check_column(amount_c[COL]['outbound'])
         # extra columns
         if EXT_FIELDS in self.file_conf:
             for field_c in self.file_conf[EXT_FIELDS].values():
@@ -221,12 +224,41 @@ class CsvExtractor:
             row[RES_COL][AMT] = amount
             row[RES_COL][AMT_TYPE] = amount_type
 
+    def _process_two_cols_amt_fields(self):
+        amt_conf = self.file_conf[FIELDS][AMT]
+        amt_in_col = amt_conf[COL]['inbound']
+        amt_out_col = amt_conf[COL]['outbound']
+
+        for row in self.rows:
+            amount_in = amount_util.POS_ZERO
+            amount_out = amount_util.NEG_ZERO
+            if row[amt_in_col]:
+                amount_in = amount_util.convert_amount_to_decimal(row[amt_in_col])
+                amount_in = amount_in.copy_sign(amount_util.POS)
+            if row[amt_out_col]:
+                amount_out = amount_util.convert_amount_to_decimal(row[amt_out_col])
+                amount_out = amount_out.copy_sign(amount_util.NEG)
+
+            amount = amount_in + amount_out
+            if amount.is_signed():
+                amount_type = AmountType.OUT
+            else:
+                amount_type = AmountType.IN
+            if amount == 0 and row[amt_out_col]:
+                # if outbound field exist, treat 0 as OUT (0 default to IN)
+                amount_type = AmountType.OUT
+                amount = amount.copy_sign(amount_util.NEG)
+            row[RES_COL][AMT] = amount
+            row[RES_COL][AMT_TYPE] = amount_type
+
     def _process_amount_fields(self):
         amt_format = self.file_conf[FIELDS][AMT][FORMAT]
         if amt_format == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
             self._process_one_col_with_idcs_amt_fields()
         elif amt_format == AmountFormat.ONE_COLUMN_WITH_SIGN:
             self._process_one_col_with_sign_amt_fields()
+        elif amt_format == AmountFormat.TWO_COLUMNS:
+            self._process_two_cols_amt_fields()
         else:
             raise BillAggregatorException(f'invalid amount format: {amt_format}')
 

@@ -31,6 +31,7 @@ class FileType:
 class AmountFormat:
     ONE_COLUMN_WITH_INDICATORS = 'OneColumnWithIndicators'
     ONE_COLUMN_WITH_SIGN = 'OneColumnWithSign'
+    TWO_COLUMNS = 'TwoColumns'
 
 
 class AmountType:

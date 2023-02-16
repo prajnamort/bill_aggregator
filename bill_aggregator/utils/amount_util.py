@@ -10,6 +10,8 @@ DEFAULT_DECIMAL_SEP = '.'
 
 POS = Decimal('1')
 NEG = Decimal('-1')
+POS_ZERO = Decimal('0')
+NEG_ZERO = Decimal('-0')
 
 
 def convert_amount_to_decimal(amount, decimal_separator=None):

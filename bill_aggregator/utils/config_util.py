@@ -44,7 +44,7 @@ class ConfigValidator:
             Optional(MEMO): {
                 COL: Or(str, int),
             },
-            AMT: dict,    # one_col_with_idcs_amt_schema, one_col_with_sign_amt_schema
+            AMT: dict,    # xxx_amt_schemas
         },
         Optional(EXT_FIELDS): {
             str: {
@@ -67,6 +67,14 @@ class ConfigValidator:
         FORMAT: AmountFormat.ONE_COLUMN_WITH_SIGN,
         COL: Or(str, int),
         Optional('is_outbound_positive'): bool,
+    })
+
+    two_cols_amt_schema = Schema({
+        FORMAT: AmountFormat.TWO_COLUMNS,
+        COL: {
+            'inbound': Or(str, int),
+            'outbound': Or(str, int),
+        },
     })
 
     @classmethod
@@ -102,5 +110,7 @@ class ConfigValidator:
             cls.one_col_with_idcs_amt_schema.validate(amt_conf)
         elif amt_format == AmountFormat.ONE_COLUMN_WITH_SIGN:
             cls.one_col_with_sign_amt_schema.validate(amt_conf)
+        elif amt_format == AmountFormat.TWO_COLUMNS:
+            cls.two_cols_amt_schema.validate(amt_conf)
         else:
             raise BillAggregatorException(f'invalid format for amount field: {amt_format}')
