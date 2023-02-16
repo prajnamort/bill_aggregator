@@ -59,6 +59,7 @@ class BillAggregator:
 
             for row in results:
                 print(row)
+            print(f'rows: {len(results)}')
 
     def aggregate_bills(self):
         for bill_group_conf in self.bill_group_confs:

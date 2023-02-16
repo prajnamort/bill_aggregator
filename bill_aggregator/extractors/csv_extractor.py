@@ -1,5 +1,7 @@
 import csv
 import dateutil.parser
+from io import StringIO
+from functools import partial
 
 from charset_normalizer import from_path
 
@@ -29,14 +31,16 @@ class CsvExtractor:
     def _read_csv_file(self):
         """Read original csv file into self.rows"""
         encoding = self.file_conf.get('encoding')
-        if not encoding:
+        if encoding:
+            file_func = partial(open, self.file, 'r', encoding=encoding)
+        else:
             result = from_path(self.file).best()
             if not result:
                 raise BillAggregatorException('Cannot detect encoding')
-            print(f'Detected encoding: {result.encoding}, confidence: {1.0 - result.chaos}')
-            encoding = result.encoding
+            print(f'Detected encoding: {result.encoding}, BOM: {result.bom}, confidence: {1.0 - result.chaos}')
+            file_func = partial(StringIO, str(result))
 
-        with open(self.file, 'r', encoding=encoding) as f:
+        with file_func() as f:
             csvreader = csv.reader(f)
             self.rows = list(csvreader)
 
