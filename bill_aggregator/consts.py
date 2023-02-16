@@ -28,6 +28,12 @@ class FileType:
     CSV = 'csv'
 
 
+FILE_EXTENSIONS = {
+    # lower case only
+    FileType.CSV: ['.csv'],
+}
+
+
 class AmountFormat:
     ONE_COLUMN_WITH_INDICATORS = 'OneColumnWithIndicators'
     ONE_COLUMN_WITH_SIGN = 'OneColumnWithSign'

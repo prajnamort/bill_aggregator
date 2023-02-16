@@ -1,5 +1,6 @@
 from bill_aggregator.consts import (
-    DEFAULT_AGGREGATION, FINAL_MEMO_SEPARATOR, ACCT, AGG, MEMO,
+    DEFAULT_AGGREGATION, FINAL_MEMO_SEPARATOR, FILE_EXTENSIONS,
+    ACCT, AGG, MEMO,
 )
 from bill_aggregator.extractors import ExtractorClsMapping
 from bill_aggregator.exceptions import BillAggregatorException
@@ -43,6 +44,7 @@ class BillAggregator:
         default_file_pattern = f'{account}*'
         file_pattern = bill_group_conf.get('file_pattern', default_file_pattern)
         files = sorted(self.workdir.glob(file_pattern))
+        files = [file for file in files if file.suffix.lower() in FILE_EXTENSIONS[file_type]]
 
         for file in files:
             extractor = ExtractorCls(file=file, file_conf=file_config)
