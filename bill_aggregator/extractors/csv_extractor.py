@@ -40,8 +40,9 @@ class CsvExtractor:
             print(f'Detected encoding: {result.encoding}, BOM: {result.bom}, confidence: {1.0 - result.chaos}')
             file_func = partial(StringIO, str(result))
 
+        delimiter = self.file_conf.get('delimiter', ',')
         with file_func() as f:
-            csvreader = csv.reader(f)
+            csvreader = csv.reader(f, delimiter=delimiter)
             self.rows = list(csvreader)
 
     def _update_column_count_and_trim_rows(self):

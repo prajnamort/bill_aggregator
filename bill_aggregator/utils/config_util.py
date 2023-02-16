@@ -28,6 +28,7 @@ class ConfigValidator:
 
     csv_file_config_schema = Schema({
         Optional('encoding'): str,
+        Optional('delimiter'): str,
         'has_header': bool,
         FIELDS: {
             DATE: {
