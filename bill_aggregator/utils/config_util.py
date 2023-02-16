@@ -72,10 +72,8 @@ class ConfigValidator:
 
     two_cols_amt_schema = Schema({
         FORMAT: AmountFormat.TWO_COLUMNS,
-        COL: {
-            'inbound': Or(str, int),
-            'outbound': Or(str, int),
-        },
+        'inbound': {COL: Or(str, int)},
+        'outbound': {COL: Or(str, int)},
     })
 
     @classmethod

@@ -121,8 +121,8 @@ class CsvExtractor:
         elif amount_c[FORMAT] == AmountFormat.ONE_COLUMN_WITH_SIGN:
             amount_c[COL] = self._check_column(amount_c[COL])
         elif amount_c[FORMAT] == AmountFormat.TWO_COLUMNS:
-            amount_c[COL]['inbound'] = self._check_column(amount_c[COL]['inbound'])
-            amount_c[COL]['outbound'] = self._check_column(amount_c[COL]['outbound'])
+            amount_c['inbound'][COL] = self._check_column(amount_c['inbound'][COL])
+            amount_c['outbound'][COL] = self._check_column(amount_c['outbound'][COL])
         # extra columns
         if EXT_FIELDS in self.file_conf:
             for field_c in self.file_conf[EXT_FIELDS].values():
@@ -227,8 +227,8 @@ class CsvExtractor:
 
     def _process_two_cols_amt_fields(self):
         amt_conf = self.file_conf[FIELDS][AMT]
-        amt_in_col = amt_conf[COL]['inbound']
-        amt_out_col = amt_conf[COL]['outbound']
+        amt_in_col = amt_conf['inbound'][COL]
+        amt_out_col = amt_conf['outbound'][COL]
 
         for row in self.rows:
             amount_in = amount_util.POS_ZERO
