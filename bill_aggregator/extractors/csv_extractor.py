@@ -85,12 +85,12 @@ class CsvExtractor:
         """Check if column exist, return column number as integer."""
         if isinstance(col, int):
             if col >= self.column_count:
-                raise BillAggregatorException(f'No such column: {col}')
+                raise BillAggregatorException(f'No such column: {col}. Available columns: 0 - {self.column_count-1}')
             return col
         elif isinstance(col, str):
             match_column_count = self.header_row.count(col)
             if match_column_count == 0:
-                raise BillAggregatorException(f'No such column: {col}')
+                raise BillAggregatorException(f'No such column: {col}. Available columns: {self.header_row}')
             elif match_column_count >= 2:
                 raise BillAggregatorException(f'Multiple Column exists: {col}')
             return self.header_row.index(col)
