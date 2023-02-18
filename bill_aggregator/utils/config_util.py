@@ -2,7 +2,7 @@ import yaml
 from schema import Schema, Or, Optional, SchemaError
 
 from bill_aggregator.consts import (
-    DEFAULT_CONFIG_FILE, FileType, AmountFormat,
+    DEFAULT_CONFIG_FILE, FileType, AmountFormat, ExportType,
     FIELDS, EXT_FIELDS, COL, FORMAT, ACCT, AGG, DATE, TIME, NAME, MEMO, AMT,
 )
 from bill_aggregator.exceptions import BillAggregatorException
@@ -10,14 +10,15 @@ from bill_aggregator.exceptions import BillAggregatorException
 
 config_schema = Schema({
     'bill_groups': list,    # bill_group_schema
+    'export_to': Or(ExportType.XLSX),
+    'export_config': dict,    # one of export_config_schemas
 })
-
 
 bill_group_schema = Schema({
     ACCT: str,
     Optional(AGG): str,
-    'file_type': Or(FileType.CSV, FileType.XLS),
-    'file_config': dict,    # specific xxx_file_config_schema
+    'file_type': str,
+    'file_config': dict,    # one of file_config_schemas
     Optional('final_memo'): [str],
 })
 
@@ -38,7 +39,7 @@ tabular_file_config_common = {  # Not a Schema(), don't validate on this
         Optional(MEMO): {
             COL: Or(str, int),
         },
-        AMT: dict,    # specific xxx_amt_schema
+        AMT: dict,    # one of amount_config_schemas
     },
     Optional(EXT_FIELDS): {
         str: {
@@ -47,39 +48,46 @@ tabular_file_config_common = {  # Not a Schema(), don't validate on this
     },
 }
 
-csv_file_config_schema = Schema({
-    Optional('encoding'): str,
-    Optional('delimiter'): str,
-    **tabular_file_config_common,
-})
+file_config_schemas = {
+    FileType.CSV: Schema({
+        Optional('encoding'): str,
+        Optional('delimiter'): str,
+        **tabular_file_config_common,
+    }),
+    FileType.XLS: Schema({
+        Optional('skiprows'): int,
+        Optional('skipfooters'): int,
+        **tabular_file_config_common,
+    }),
+}
 
-xls_file_config_schema = Schema({
-    Optional('skiprows'): int,
-    Optional('skipfooters'): int,
-    **tabular_file_config_common,
-})
-
-one_col_with_idcs_amt_schema = Schema({
-    FORMAT: AmountFormat.ONE_COLUMN_WITH_INDICATORS,
-    COL: Or(str, int),
-    'indicators': [{
+amount_config_schemas = {
+    AmountFormat.ONE_COLUMN_WITH_INDICATORS: Schema({
+        FORMAT: AmountFormat.ONE_COLUMN_WITH_INDICATORS,
         COL: Or(str, int),
-        'inbound_value': str,
-        'outbound_value': str,
-    }],
-})
+        'indicators': [{
+            COL: Or(str, int),
+            'inbound_value': str,
+            'outbound_value': str,
+        }],
+    }),
+    AmountFormat.ONE_COLUMN_WITH_SIGN: Schema({
+        FORMAT: AmountFormat.ONE_COLUMN_WITH_SIGN,
+        COL: Or(str, int),
+        Optional('is_outbound_positive'): bool,
+    }),
+    AmountFormat.TWO_COLUMNS: Schema({
+        FORMAT: AmountFormat.TWO_COLUMNS,
+        'inbound': {COL: Or(str, int)},
+        'outbound': {COL: Or(str, int)},
+    })
+}
 
-one_col_with_sign_amt_schema = Schema({
-    FORMAT: AmountFormat.ONE_COLUMN_WITH_SIGN,
-    COL: Or(str, int),
-    Optional('is_outbound_positive'): bool,
-})
-
-two_cols_amt_schema = Schema({
-    FORMAT: AmountFormat.TWO_COLUMNS,
-    'inbound': {COL: Or(str, int)},
-    'outbound': {COL: Or(str, int)},
-})
+export_config_schemas = {
+    ExportType.XLSX: Schema({
+        'columns': list,
+    }),
+}
 
 
 class ConfigValidator:
@@ -88,8 +96,16 @@ class ConfigValidator:
     def validate_config(cls, conf):
         try:
             config_schema.validate(conf)
+
+            # validate config for reading original files
             for bill_group_conf in conf['bill_groups']:
                 cls.validate_bill_group_config(bill_group_conf)
+
+            # validate config for exporting results
+            export_type = conf['export_to']
+            if export_type not in ExportType.ALL:
+                raise BillAggregatorException(f'invalid export type: {export_type}')
+            cls.validate_export_config(export_type, conf['export_config'])
 
             print("Configuration is valid.")
         except SchemaError as se:
@@ -99,34 +115,27 @@ class ConfigValidator:
     def validate_bill_group_config(cls, bill_group_conf):
         bill_group_schema.validate(bill_group_conf)
         file_type = bill_group_conf['file_type']
-        if file_type == FileType.CSV:
-            cls.validate_csv_file_config(bill_group_conf['file_config'])
-        elif file_type == FileType.XLS:
-            cls.validate_xls_file_config(bill_group_conf['file_config'])
+        if file_type not in FileType.ALL:
+            raise BillAggregatorException(f'invalid file_type: {file_type}')
+
+        file_conf = bill_group_conf['file_config']
+        if file_type in [FileType.CSV, FileType.XLS]:
+            # validation for tabular files
+            file_config_schemas[file_type].validate(file_conf)
+            cls.validate_amount_config(file_conf[FIELDS][AMT])
 
     @classmethod
-    def validate_csv_file_config(cls, file_conf):
-        csv_file_config_schema.validate(file_conf)
-        cls.validate_amt_config(file_conf[FIELDS][AMT])
-
-    @classmethod
-    def validate_xls_file_config(cls, file_conf):
-        xls_file_config_schema.validate(file_conf)
-        cls.validate_amt_config(file_conf[FIELDS][AMT])
-
-    @classmethod
-    def validate_amt_config(cls, amt_conf):
+    def validate_amount_config(cls, amt_conf):
         if FORMAT not in amt_conf:
             raise BillAggregatorException('format must be specified for amount field')
         amt_format = amt_conf[FORMAT]
-        if amt_format == AmountFormat.ONE_COLUMN_WITH_INDICATORS:
-            one_col_with_idcs_amt_schema.validate(amt_conf)
-        elif amt_format == AmountFormat.ONE_COLUMN_WITH_SIGN:
-            one_col_with_sign_amt_schema.validate(amt_conf)
-        elif amt_format == AmountFormat.TWO_COLUMNS:
-            two_cols_amt_schema.validate(amt_conf)
-        else:
+        if amt_format not in AmountFormat.ALL:
             raise BillAggregatorException(f'invalid format for amount field: {amt_format}')
+        amount_config_schemas[amt_format].validate(amt_conf)
+
+    @classmethod
+    def validate_export_config(cls, export_type, export_conf):
+        export_config_schemas[export_type].validate(export_conf)
 
 
 def load_yaml_config(file=DEFAULT_CONFIG_FILE):

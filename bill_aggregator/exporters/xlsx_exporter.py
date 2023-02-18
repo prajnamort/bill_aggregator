@@ -1,0 +1,2 @@
+class XlsxExporter:
+    pass

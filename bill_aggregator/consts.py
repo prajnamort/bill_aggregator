@@ -28,6 +28,8 @@ class FileType:
     CSV = 'csv'
     XLS = 'xls'
 
+    ALL = [CSV, XLS]
+
 
 FILE_EXTENSIONS = {
     # lower case only
@@ -41,8 +43,20 @@ class AmountFormat:
     ONE_COLUMN_WITH_SIGN = 'OneColumnWithSign'
     TWO_COLUMNS = 'TwoColumns'
 
+    ALL = [
+        ONE_COLUMN_WITH_INDICATORS,
+        ONE_COLUMN_WITH_SIGN,
+        TWO_COLUMNS,
+    ]
+
 
 class AmountType:
     IN = 'in'
     OUT = 'out'
     UNKNOWN = 'unknown'
+
+
+class ExportType:
+    XLSX = 'xlsx'
+
+    ALL = [XLSX]
