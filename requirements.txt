@@ -4,3 +4,5 @@ schema==0.7.5
 charset-normalizer==3.0.1
 dateparser==1.1.7
 python-dateutil==2.8.2
+xlrd==2.0.1
+openpyxl==3.1.1

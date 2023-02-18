@@ -26,11 +26,13 @@ AMT_TYPE = 'amount_type'
 
 class FileType:
     CSV = 'csv'
+    XLS = 'xls'
 
 
 FILE_EXTENSIONS = {
     # lower case only
     FileType.CSV: ['.csv'],
+    FileType.XLS: ['.xls'],
 }
 
 

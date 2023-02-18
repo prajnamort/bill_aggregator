@@ -1,9 +1,11 @@
 import csv
-import dateutil.parser
 from io import StringIO
+from abc import abstractmethod
 from functools import partial
 
-from charset_normalizer import from_path
+import xlrd
+import dateutil.parser
+import charset_normalizer
 
 from bill_aggregator.consts import (
     MIN_BILL_COLUMNS, WARN_TRIM_ROW_COUNT, AmountFormat, AmountType,
@@ -11,65 +13,27 @@ from bill_aggregator.consts import (
 )
 from bill_aggregator.exceptions import BillAggregatorException
 from bill_aggregator.utils import amount_util
+from .base_extractor import BaseExtractor
 
 
 RES_COL = -1    # Column for storing temporary results
 
 
-class CsvExtractor:
+class TabularExtractor(BaseExtractor):
+    """Abstract base class for tabular file types (e.g. csv, xls...)"""
 
     def __init__(self, file, file_conf):
-        self.file = file
-        self.file_conf = file_conf
-
-        self.rows = []
-        self.column_count = 0
+        super().__init__(file=file, file_conf=file_conf)
         self.has_header = self.file_conf['has_header']
+
+        self.column_count = 0
         self.header_row = None
-        self.results = []
+        self.rows = []
 
-    def _read_csv_file(self):
-        """Read original csv file into self.rows"""
-        encoding = self.file_conf.get('encoding')
-        if encoding:
-            file_func = partial(open, self.file, 'r', encoding=encoding)
-        else:
-            result = from_path(self.file).best()
-            if not result:
-                raise BillAggregatorException('Cannot detect encoding')
-            print(f'Detected encoding: {result.encoding}, BOM: {result.bom}, confidence: {1.0 - result.chaos}')
-            file_func = partial(StringIO, str(result))
-
-        delimiter = self.file_conf.get('delimiter', ',')
-        with file_func() as f:
-            csvreader = csv.reader(f, delimiter=delimiter)
-            self.rows = list(csvreader)
-
-    def _update_column_count_and_trim_rows(self):
-        """Update column_count, and trim rows"""
-        orig_row_count = len(self.rows)
-        if not orig_row_count:
-            return
-
-        column_count = max(len(row) for row in self.rows)
-        if column_count < MIN_BILL_COLUMNS:
-            self.rows = []
-            return
-
-        self.column_count = column_count
-        self.rows = [row for row in self.rows if len(row) == self.column_count]
-
-        new_row_count = len(self.rows)
-        diff_row_count = orig_row_count - new_row_count
-        if diff_row_count >= WARN_TRIM_ROW_COUNT:
-            print(f'Trimed {diff_row_count} rows.')
-
-    def _strip_all_fields(self):
-        """Trim all fields, in both header and data rows."""
-        results = []
-        for row in self.rows:
-            results.append([f.strip() for f in row])
-        self.rows = results
+    @abstractmethod
+    def load_file(self):
+        """Read data from tabular file into self.rows"""
+        pass
 
     def _seperate_header_row(self):
         """Seperate header and data rows, if header exists."""
@@ -80,6 +44,16 @@ class CsvExtractor:
             raise BillAggregatorException('No valid rows')
         self.header_row = self.rows[0]
         self.rows = self.rows[1:]
+
+    def _strip_all_fields(self):
+        """Trim all fields, in both header and data rows."""
+        if self.header_row:
+            self.header_row = [f.strip() for f in self.header_row]
+
+        results = []
+        for row in self.rows:
+            results.append([f.strip() for f in row])
+        self.rows = results
 
     def _check_column(self, col):
         """Check if column exist, return column number as integer."""
@@ -272,11 +246,9 @@ class CsvExtractor:
                 row[RES_COL][field_name] = field_value
 
     def prepare_data(self):
-        """Read data from csv file, and get them prepared in self.rows"""
-        self._read_csv_file()
-        self._update_column_count_and_trim_rows()
-        self._strip_all_fields()
+        """Get the data in self.rows prepared for further processing"""
         self._seperate_header_row()
+        self._strip_all_fields()
         self._check_and_update_config()
 
         for row in self.rows:
@@ -295,8 +267,83 @@ class CsvExtractor:
             self.results.append(row[RES_COL])
 
     def extract_bills(self):
-        """Main entry point for this Extractor"""
+        """Main entry point for Extractor"""
         print(f'Handling file: {self.file.name}')
 
+        self.load_file()
         self.prepare_data()
         self.process_data()
+
+
+class CsvExtractor(TabularExtractor):
+
+    def __init__(self, file, file_conf):
+        super().__init__(file=file, file_conf=file_conf)
+        self.encoding = self.file_conf.get('encoding', None)
+        self.delimiter = self.file_conf.get('delimiter', ',')
+
+    def _read_csv_file(self):
+        """Read original csv file into self.rows"""
+        if self.encoding:
+            file_func = partial(open, self.file, 'r', encoding=self.encoding)
+        else:
+            result = charset_normalizer.from_path(self.file).best()
+            if not result:
+                raise BillAggregatorException('Cannot detect encoding')
+            print(
+                f'Detected encoding: {result.encoding}, BOM: {result.bom}, '
+                f'confidence: {1.0 - result.chaos}')
+            file_func = partial(StringIO, str(result))
+
+        with file_func() as f:
+            csvreader = csv.reader(f, delimiter=self.delimiter)
+            self.rows = list(csvreader)
+
+    def _update_column_count_and_trim_rows(self):
+        """Update column_count, and trim rows"""
+        orig_row_count = len(self.rows)
+        if not orig_row_count:
+            return
+
+        column_count = max(len(row) for row in self.rows)
+        if column_count < MIN_BILL_COLUMNS:
+            self.rows = []
+            return
+
+        self.column_count = column_count
+        self.rows = [row for row in self.rows if len(row) == self.column_count]
+
+        new_row_count = len(self.rows)
+        diff_row_count = orig_row_count - new_row_count
+        if diff_row_count >= WARN_TRIM_ROW_COUNT:
+            print(f'Trimed {diff_row_count} rows.')
+
+    def load_file(self):
+        self._read_csv_file()
+        self._update_column_count_and_trim_rows()
+
+
+class XlsExtractor(TabularExtractor):
+
+    def __init__(self, file, file_conf):
+        super().__init__(file=file, file_conf=file_conf)
+        self.skiprows = self.file_conf.get('skiprows', 0)
+        self.skipfooters = self.file_conf.get('skipfooters', 0)
+
+    def load_file(self):
+        """Read original csv file into self.rows"""
+        sheet = xlrd.open_workbook(self.file).sheet_by_index(0)
+        start = 0 + self.skiprows
+        end = (sheet.nrows - 1) - self.skipfooters
+
+        if start > end:
+            raise BillAggregatorException(
+                f'Need to skip {self.skiprows}+{self.skipfooters} rows, '
+                f'but only {sheet.nrows} rows found')
+
+        results = []
+        for i in range(start, end+1):
+            row = [str(cell.value) for cell in sheet.row(i)]
+            results.append(row)
+        self.rows = results
+        self.column_count = len(self.rows[0])
