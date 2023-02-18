@@ -133,14 +133,14 @@ class TabularExtractor(BaseExtractor):
             row[RES_COL][TIME] = dt.time()
 
     def _sort_data_by_datetime(self):
-        def _key(row):
+        def _sort_key(row):
             return (row[RES_COL][DATE], row[RES_COL][TIME])
 
-        if _key(self.rows[0]) > _key(self.rows[-1]):
+        if _sort_key(self.rows[0]) > _sort_key(self.rows[-1]):
             self.rows.reverse()
-        if not all(_key(self.rows[i]) <= _key(self.rows[i+1]) for i in range(len(self.rows) - 1)):
+        if not all(_sort_key(self.rows[i]) <= _sort_key(self.rows[i+1]) for i in range(len(self.rows) - 1)):
             print('Sort performed')
-            self.rows.sort(key=_key)    # stable sort (if same key, preserve order)
+            self.rows.sort(key=_sort_key)    # stable sort (if same key, order is preserved)
 
     def _process_name_field(self):
         name_col = self.file_conf[FIELDS][NAME][COL]
@@ -268,7 +268,7 @@ class TabularExtractor(BaseExtractor):
 
     def extract_bills(self):
         """Main entry point for Extractor"""
-        print(f'Handling file: {self.file.name}')
+        print(f'Extracting file: {self.file.name}')
 
         self.load_file()
         self.prepare_data()
