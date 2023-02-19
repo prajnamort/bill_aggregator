@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+import datetime
 
 import xlsxwriter
 
 from bill_aggregator.consts import (
+    AmountType,
     ACCT, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE)
 from bill_aggregator.exceptions import BillAggregatorException
 
@@ -44,23 +46,91 @@ class BaseColumn(ABC):
             width=self.width, cell_format=self.format,
         )
 
-
-class EmptyColumn(BaseColumn):
-    pass
+    @abstractmethod
+    def write_cell(self, row_idx, row_data):
+        pass
 
 
 class DateColumn(BaseColumn):
 
-    def write_data(self, row_idx, row):
-        pass
+    def write_cell(self, row_idx, row_data):
+        self.worksheet.write_datetime(row_idx, self.col_idx, row_data[DATE])
+
+
+class TimeColumn(BaseColumn):
+
+    def write_cell(self, row_idx, row_data):
+        if row_data[TIME] == datetime.time(0):
+            return
+        self.worksheet.write_datetime(row_idx, self.col_idx, row_data[TIME])
+
+
+class AccountColumn(BaseColumn):
+
+    def write_cell(self, row_idx, row_data):
+        self.worksheet.write_string(row_idx, self.col_idx, row_data[ACCT])
+
+
+class NameColumn(BaseColumn):
+
+    def write_cell(self, row_idx, row_data):
+        self.worksheet.write_string(row_idx, self.col_idx, row_data[NAME])
+
+
+class MemoColumn(BaseColumn):
+
+    def write_cell(self, row_idx, row_data):
+        self.worksheet.write_string(row_idx, self.col_idx, row_data[MEMO])
 
 
 class AmountColumn(BaseColumn):
-    pass
+
+    def write_cell(self, row_idx, row_data):
+        self.worksheet.write_number(row_idx, self.col_idx, row_data[AMT])
+
+
+class AmountTypeColumn(BaseColumn):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.inbound_value = self.column_conf['data']['inbound_value']
+        self.outbound_value = self.column_conf['data']['outbound_value']
+        self.unknown_value = self.column_conf['data']['unknown_value']
+
+    def write_cell(self, row_idx, row_data):
+        if row_data[AMT_TYPE] == AmountType.IN:
+            self.worksheet.write_string(row_idx, self.col_idx, self.inbound_value)
+        elif row_data[AMT_TYPE] == AmountType.OUT:
+            self.worksheet.write_string(row_idx, self.col_idx, self.outbound_value)
+        elif row_data[AMT_TYPE] == AmountType.UNKNOWN:
+            self.worksheet.write_string(row_idx, self.col_idx, self.unknown_value)
+
+
+class EmptyColumn(BaseColumn):
+
+    def write_cell(self, row_idx, row_data):
+        pass
 
 
 class CustomColumn(BaseColumn):
-    pass
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.value = self.column_conf['data']['value']
+
+    def write_cell(self, row_idx, row_data):
+        self.worksheet.write_string(row_idx, self.col_idx, self.value)
+
+
+field_to_column_map = {
+    DATE: DateColumn,
+    TIME: TimeColumn,
+    ACCT: AccountColumn,
+    NAME: NameColumn,
+    MEMO: MemoColumn,
+    AMT: AmountColumn,
+    AMT_TYPE: AmountTypeColumn,
+}
 
 
 class XlsxExporter:
@@ -78,14 +148,10 @@ class XlsxExporter:
     def _get_column_cls(self, column_conf):
         data_conf = column_conf['data']
         data_type = data_conf['type']
-        if data_type == 'empty':
-            return EmptyColumn
-        elif data_type == 'extracted_field':
-            field_to_column_map = {
-                DATE: DateColumn,
-                AMT: AmountColumn,
-            }
+        if data_type == 'data':
             return field_to_column_map[data_conf['field']]
+        elif data_type == 'empty':
+            return EmptyColumn
         elif data_type == 'custom':
             return CustomColumn
         else:
@@ -129,7 +195,10 @@ class XlsxExporter:
             })
 
     def write_data(self):
-        pass
+        for i, row_data in enumerate(self.data):
+            row_idx = i + 1    # additional 1 for header row
+            for column in self.columns:
+                column.write_cell(row_idx, row_data)
 
     def save_workbook(self):
         self.workbook.close()
