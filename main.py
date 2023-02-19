@@ -38,7 +38,9 @@ def main():
 
     # actual work begins here
     aggregator = BillAggregator(conf=conf, workdir=workdir)
+    aggregator.extract_bills()
     aggregator.aggregate_bills()
+    aggregator.export_bills()
 
 
 if __name__ == '__main__':

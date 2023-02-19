@@ -2,8 +2,9 @@ from bill_aggregator.consts import (
     DEFAULT_AGGREGATION, FINAL_MEMO_SEPARATOR, FILE_EXTENSIONS,
     ACCT, AGG, MEMO, DATE, TIME,
 )
-from bill_aggregator.extractors import ExtractorClsMapping
 from bill_aggregator.exceptions import BillAggregatorException
+from bill_aggregator.extractors import ExtractorClsMapping
+from bill_aggregator.exporters import ExporterClsMapping
 
 
 class BillAggregator:
@@ -12,6 +13,8 @@ class BillAggregator:
         self.conf = conf
         self.workdir = workdir
         self.bill_group_confs = self.conf['bill_groups']
+        self.export_type = self.conf['export_to']
+        self.export_conf = self.conf.get('export_config', None)
 
         self.extracted_results = []
         self.aggregated_results = {}
@@ -74,7 +77,11 @@ class BillAggregator:
             # print(f'rows: {len(results)}')
             # print(f'total rows: {len(self.extracted_results)}')
 
-    def aggregate(self):
+    def extract_bills(self):
+        for bill_group_conf in self.bill_group_confs:
+            self.extract_bill_group(bill_group_conf)
+
+    def aggregate_bills(self):
         def _sort_key(row):
             return (row[DATE], row[TIME])
 
@@ -88,12 +95,17 @@ class BillAggregator:
         for l in self.aggregated_results.values():
             l.sort(key=_sort_key)    # stable sort (if same key, order is preserved)
 
-    def aggregate_bills(self):
-        for bill_group_conf in self.bill_group_confs:
-            self.extract_bill_group(bill_group_conf)
-        self.aggregate()
-
         # for key, results in self.aggregated_results.items():
         #     for row in results:
         #         print(row)
         #     print(f'{key}: {len(results)} rows')
+
+    def export_bills(self):
+        ExporterCls = ExporterClsMapping[self.export_type]
+        for aggregation, results in self.aggregated_results.items():
+            exporter = ExporterCls(
+                data=results,
+                aggregation=aggregation,
+                export_conf=self.export_conf,
+                workdir=self.workdir)
+            exporter.export_bills()

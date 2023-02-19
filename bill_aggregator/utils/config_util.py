@@ -85,9 +85,17 @@ amount_config_schemas = {
 
 export_config_schemas = {
     ExportType.XLSX: Schema({
-        'columns': list,
+        Optional('font_size'): int,
+        Optional('table_style'): str,
+        'columns': list,    # column_config_schema
     }),
 }
+
+column_config_schema = Schema({
+    'header': str,
+    'data': dict,
+    Optional('style'): dict,
+})
 
 
 class ConfigValidator:
@@ -136,6 +144,8 @@ class ConfigValidator:
     @classmethod
     def validate_export_config(cls, export_type, export_conf):
         export_config_schemas[export_type].validate(export_conf)
+        for column_config in export_conf['columns']:
+            column_config_schema.validate(column_config)
 
 
 def load_yaml_config(file=DEFAULT_CONFIG_FILE):
