@@ -86,6 +86,7 @@ amount_config_schemas = {
 export_config_schemas = {
     ExportType.XLSX: Schema({
         Optional('font_size'): int,
+        Optional('row_height'): int,
         Optional('table_style'): str,
         'columns': list,    # column_config_schema
     }),
