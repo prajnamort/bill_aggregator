@@ -11,7 +11,7 @@ from bill_aggregator.exceptions import BillAggregatorException
 
 
 FONT_SIZE = 11  # This global value may be changed
-DEFAULT_TABLE_STYLE = 'Table Style Light 2'
+DEFAULT_TABLE_STYLE = 'Table Style Medium 2'
 LIGHT_GREEN = '#BFECC7'
 DARK_GREEN = '#005600'
 LIGHT_RED = '#FFC0C7'
