@@ -26,7 +26,7 @@ class BillAggregator:
             raise BillAggregatorException('final_memo specified unknown field')
 
         for row in results:
-            memo = FINAL_MEMO_SEPARATOR.join(row[f] for f in field_list)
+            memo = FINAL_MEMO_SEPARATOR.join(row[f] for f in field_list if row[f])
             row[MEMO] = memo
         return results
 
