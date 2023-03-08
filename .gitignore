@@ -1,3 +1,5 @@
+/config.yaml
+
 # python
 __pycache__/
 *.py[cod]

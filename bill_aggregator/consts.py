@@ -1,5 +1,6 @@
 # Default config
-DEFAULT_CONFIG_FILE = 'my_bills/config.yaml'
+DEFAULT_CONFIG_FILE = 'config.yaml'
+DEFAULT_WORKDIR = 'bills/'
 DEFAULT_AGGREGATION = 'result'
 
 # Other configs

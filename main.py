@@ -18,17 +18,14 @@ def main():
     parser.add_argument(
         '-d', '--dir',
         required=False,
-        help='bills directory (default: where your CONF file locates)')
+        help=f'bills directory (default: {consts.DEFAULT_WORKDIR})')
     args = parser.parse_args()
 
     config_file = pathlib.Path(args.conf or consts.DEFAULT_CONFIG_FILE).absolute()
     if not config_file.is_file():
         raise exceptions.BillAggregatorException(f'{config_file}: no such file')
 
-    if args.dir:
-        workdir = pathlib.Path(args.dir).absolute()
-    else:
-        workdir = config_file.parent
+    workdir = pathlib.Path(args.dir or consts.DEFAULT_WORKDIR).absolute()
     if not workdir.is_dir():
         raise exceptions.BillAggregatorException(f'{workdir}: no such directory')
 
