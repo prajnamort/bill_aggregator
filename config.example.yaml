@@ -1,0 +1,143 @@
+---
+# config for reading bill files
+bill_groups:
+
+  ### This section is just an example ###
+  - account: "Bank_Account_1"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Transaction Date"
+        name:
+          column: "Description"
+        amount:
+          format: OneColumnWithSign
+          column: "Transaction Amount"
+          is_outbound_positive: true
+
+  ### This section is just an example ###
+  - account: "Bank_Account_2"
+    file_type: csv
+    file_config:
+      has_header: false
+      fields:
+        date:
+          column: 0
+        name:
+          column: 1
+        amount:
+          format: TwoColumns
+          inbound:
+            column: 3
+          outbound:
+            column: 2
+
+  ### This section is just an example ###
+  - account: "Bank_Account_3"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Date"
+        name:
+          column: "Transaction Details"
+        amount:
+          format: TwoColumns
+          inbound:
+            column: "Funds In"
+          outbound:
+            column: "Funds Out"
+
+  ### Add more bill_groups below ####
+  # ...
+  # ...
+  # ...
+
+# config for exporting results
+export_to: xlsx
+export_config:
+  font_size: 14
+  row_height: 19
+  table_style: "Table Style Medium 2"
+  columns:
+    - header: "Date"
+      data:
+        type: data
+        field: date
+      style:
+        width: 11
+        align: center
+        number_format: "yyyy-mm-dd"
+    - header: "Time"
+      data:
+        type: data
+        field: time
+      style:
+        width: 5.5
+        align: center
+        number_format: "hh:mm"
+    - header: "Account"
+      data:
+        type: data
+        field: account
+      style:
+        width: 20
+        align: center
+    - header: "Orig Desc"
+      data:
+        type: data
+        field: name
+      style:
+        width: 30
+        align: left
+    - header: "Orig Memo"
+      data:
+        type: data
+        field: memo
+      style:
+        width: 25
+        align: left
+    - header: "Remark"
+      data:
+        type: custom
+        value: " "
+      style:
+        width: 20
+        align: left
+    - header: "Amount"
+      data:
+        type: data
+        field: amount
+      style:
+        width: 9
+        align: right
+        number_format: "0.00"
+        inbound_bg_color: "#BFECC7"
+        inbound_font_color: "#005600"
+    - header: "In/Out"
+      data:
+        type: data
+        field: amount_type
+        inbound_value: "In"
+        outbound_value: "Out"
+        unknown_value: "Unknown"
+      style:
+        width: 6
+        align: right
+        unknown_bg_color: "#FFC0C7"
+        unknown_font_color: "#910007"
+    - header: "Category"
+      data:
+        type: empty
+      style:
+        width: 10
+        align: left
+    - header: "Sub Category"
+      data:
+        type: empty
+      style:
+        width: 10
+        align: left
