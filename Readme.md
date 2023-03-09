@@ -54,8 +54,9 @@ Edit the config file:
 
 How to write the config?
 
-- For well-known bank accounts, just copy config from [config_templates](/config_templates).
+- For well-known bank accounts, just copy config from [config_templates](/config_templates).<br>
   (If your bank account can't be found here, you are more than welcome to contribute!)
+- For a detailed documentation, see [configuration.md](/configuration.md).
 
 ### 3. Run the program
 

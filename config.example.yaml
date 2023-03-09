@@ -1,61 +1,44 @@
 ---
-# config for reading bill files
+# configs for reading bill files
 bill_groups:
 
-  ### This section is just an example ###
-  - account: "Bank_Account_1"
-    file_type: csv
-    file_config:
-      has_header: true
-      fields:
-        date:
-          column: "Transaction Date"
-        name:
-          column: "Description"
-        amount:
-          format: OneColumnWithSign
-          column: "Transaction Amount"
+  ### Bill Group 1 ###
+  # - account: "..."
+  #   file_type: csv
+  #   file_config:
+  #     has_header: ...
+  #     fields:
+  #       date:
+  #         column: ...
+  #       name:
+  #         column: ...
+  #       amount:
+  #         format: OneColumnWithSign
+  #         column: ...
 
-  ### This section is just an example ###
-  - account: "Bank_Account_2"
-    file_type: csv
-    file_config:
-      has_header: true
-      fields:
-        date:
-          column: "Date"
-        name:
-          column: "Transaction Details"
-        amount:
-          format: TwoColumns
-          inbound:
-            column: "Funds In"
-          outbound:
-            column: "Funds Out"
+  ### Bill Group 2 ###
+  # - account: "..."
+  #   file_type: csv
+  #   file_config:
+  #     has_header: ...
+  #     fields:
+  #       date:
+  #         column: ...
+  #       name:
+  #         column: ...
+  #       amount:
+  #         format: TwoColumns
+  #         inbound:
+  #           column: ...
+  #         outbound:
+  #           column: ...
 
-  ### This section is just an example ###
-  - account: "Bank_Account_3"
-    file_type: csv
-    file_config:
-      has_header: false
-      fields:
-        date:
-          column: 0
-        name:
-          column: 1
-        amount:
-          format: TwoColumns
-          inbound:
-            column: 3
-          outbound:
-            column: 2
-
-  ### Add more bill_groups below ####
+  ### More Bill Groups ####
   # ...
   # ...
   # ...
 
-# config for exporting results
+# configs for exporting results
 export_to: xlsx
 export_config:
   font_size: 14
