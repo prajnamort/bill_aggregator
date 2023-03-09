@@ -1,6 +1,6 @@
 # Bill Aggregator
 
-Bill Aggregator is a program that simplifies your personal(family) bookkeeping.
+Bill Aggregator is a program that simplifies your personal/family bookkeeping.
 
 It aggregates all your bills from different formats/schemas into a single, unified file.
 
@@ -61,12 +61,10 @@ Edit the config file:
 
 ### 3. Run the program
 
-All set!!!
-
 Now run the program:
 
 ```bash
 ./main.py -c <config.yaml> -d <bills_directory>
 ```
 
-The result file has been put into your `<bills_directory>`, Enjoy it!
+The result file(s) has been put into `<bills_directory>/results/`, Enjoy your bookkeeping!

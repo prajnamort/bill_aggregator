@@ -1,7 +1,10 @@
-# Default config
+# Default inputs
 DEFAULT_CONFIG_FILE = 'config.yaml'
 DEFAULT_WORKDIR = 'bills/'
-DEFAULT_AGGREGATION = 'result'
+# Default aggregations (output file names)
+RESULTS_DIR = 'results/'
+DEFAULT_AGG = 'RESULT'
+DEFAULT_SEP_CUR_AGG = 'NO_CURRENCY'
 
 # Other configs
 MIN_BILL_COLUMNS = 3
@@ -16,7 +19,7 @@ COL = 'column'
 FORMAT = 'format'
 
 ACCT = 'account'
-AGG = 'aggregation'
+CUR = 'currency'
 DATE = 'date'
 TIME = 'time'
 NAME = 'name'

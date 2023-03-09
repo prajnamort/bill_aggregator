@@ -5,8 +5,8 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 
 from bill_aggregator.consts import (
-    AmountType,
-    ACCT, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE)
+    AmountType, RESULTS_DIR,
+    ACCT, CUR, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE)
 from bill_aggregator.exceptions import BillAggregatorException
 
 
@@ -83,19 +83,25 @@ class TimeColumn(BaseColumn):
 class AccountColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, row_data[ACCT])
+        self.worksheet.write_string(row_idx, self.col_idx, row_data[ACCT] or '')
 
 
 class NameColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, row_data[NAME])
+        self.worksheet.write_string(row_idx, self.col_idx, row_data[NAME] or '')
 
 
 class MemoColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, row_data[MEMO])
+        self.worksheet.write_string(row_idx, self.col_idx, row_data[MEMO] or '')
+
+
+class CurrencyColumn(BaseColumn):
+
+    def write_cell(self, row_idx, row_data):
+        self.worksheet.write_string(row_idx, self.col_idx, row_data[CUR] or '')
 
 
 class AmountColumn(BaseColumn):
@@ -183,7 +189,7 @@ class CustomColumn(BaseColumn):
         self.value = self.column_conf['data']['value']
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, self.value)
+        self.worksheet.write_string(row_idx, self.col_idx, self.value or '')
 
 
 field_to_column_map = {
@@ -192,6 +198,7 @@ field_to_column_map = {
     ACCT: AccountColumn,
     NAME: NameColumn,
     MEMO: MemoColumn,
+    CUR: CurrencyColumn,
     AMT: AmountColumn,
     AMT_TYPE: AmountTypeColumn,
 }
@@ -225,8 +232,12 @@ class XlsxExporter:
         nrows = len(self.data) + HEADER_ROWS
         ncols = len(self.export_conf['columns'])
 
+        # create results_dir if not exists
+        results_dir = self.workdir / RESULTS_DIR
+        results_dir.mkdir(parents=True, exist_ok=True)
+
         # create excel file
-        file = self.workdir / f'{self.aggregation}.xlsx'
+        file = results_dir / f'{self.aggregation}.xlsx'
         self.workbook = xlsxwriter.Workbook(file)
         self.worksheet = self.workbook.add_worksheet(name=self.aggregation)
 

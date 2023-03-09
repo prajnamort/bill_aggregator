@@ -1,6 +1,6 @@
 from bill_aggregator.consts import (
-    DEFAULT_AGGREGATION, FINAL_MEMO_SEPARATOR, FILE_EXTENSIONS,
-    ACCT, AGG, MEMO, DATE, TIME,
+    DEFAULT_AGG, DEFAULT_SEP_CUR_AGG, FINAL_MEMO_SEPARATOR, FILE_EXTENSIONS,
+    ACCT, CUR, MEMO, DATE, TIME,
 )
 from bill_aggregator.exceptions import BillAggregatorException
 from bill_aggregator.extractors import ExtractorClsMapping
@@ -13,6 +13,7 @@ class BillAggregator:
         self.conf = conf
         self.workdir = workdir
         self.bill_group_confs = self.conf['bill_groups']
+        self.separate_by_currency = self.conf.get('separate_by_currency', False)
         self.export_type = self.conf['export_to']
         self.export_conf = self.conf.get('export_config', None)
 
@@ -30,11 +31,11 @@ class BillAggregator:
             row[MEMO] = memo
         return results
 
-    def postprocess_extracted_results(self, results, account, aggregation, final_memo_conf):
-        # add account and aggregation column
+    def postprocess_extracted_results(self, results, account, currency, final_memo_conf):
+        # add account and currency column
         for row in results:
             row[ACCT] = account
-            row[AGG] = aggregation
+            row[CUR] = currency or ''
         # final_memo
         if final_memo_conf is not None:
             results = self._process_final_memo(results, final_memo_conf)
@@ -48,12 +49,12 @@ class BillAggregator:
 
     def extract_bill_group(self, bill_group_conf):
         account = bill_group_conf[ACCT]
-        aggregation = bill_group_conf.get(AGG, DEFAULT_AGGREGATION)
+        currency = bill_group_conf.get(CUR, None)
         file_type = bill_group_conf['file_type']
         file_conf = bill_group_conf['file_config']
         final_memo_conf = bill_group_conf.get('final_memo', None)
 
-        print(f'Extracting bill_group: {account} ({aggregation})')
+        print(f'Extracting bill_group: {account} ({currency})')
 
         default_file_pattern = f'{account}*'
         file_pattern = bill_group_conf.get('file_pattern', default_file_pattern)
@@ -68,7 +69,7 @@ class BillAggregator:
             results = self.postprocess_extracted_results(
                 results=results,
                 account=account,
-                aggregation=aggregation,
+                currency=currency,
                 final_memo_conf=final_memo_conf)
             self.extracted_results.extend(results)
 
@@ -85,12 +86,18 @@ class BillAggregator:
         def _sort_key(row):
             return (row[DATE], row[TIME])
 
+        def _get_agg(row):
+            if self.separate_by_currency:
+                return row[CUR] or DEFAULT_SEP_CUR_AGG
+            else:
+                return DEFAULT_AGG
+
         # aggregate by row[AGG]
         for row in self.extracted_results:
-            agg_key = row[AGG]
-            if agg_key not in self.aggregated_results:
-                self.aggregated_results[agg_key] = []
-            self.aggregated_results[agg_key].append(row)
+            agg = _get_agg(row)
+            if agg not in self.aggregated_results:
+                self.aggregated_results[agg] = []
+            self.aggregated_results[agg].append(row)
         # sort every aggregation
         for l in self.aggregated_results.values():
             l.sort(key=_sort_key)    # stable sort (if same key, order is preserved)

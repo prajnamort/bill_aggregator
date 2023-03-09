@@ -3,20 +3,21 @@ from schema import Schema, Or, Optional, SchemaError
 
 from bill_aggregator.consts import (
     DEFAULT_CONFIG_FILE, FileType, AmountFormat, ExportType,
-    FIELDS, EXT_FIELDS, COL, FORMAT, ACCT, AGG, DATE, TIME, NAME, MEMO, AMT,
+    FIELDS, EXT_FIELDS, COL, FORMAT, ACCT, CUR, DATE, TIME, NAME, MEMO, AMT,
 )
 from bill_aggregator.exceptions import BillAggregatorException
 
 
 config_schema = Schema({
     'bill_groups': list,    # bill_group_schema
+    Optional('separate_by_currency'): bool,
     'export_to': Or(ExportType.XLSX),
     'export_config': dict,    # one of export_config_schemas
 })
 
 bill_group_schema = Schema({
     ACCT: str,
-    Optional(AGG): str,
+    Optional(CUR): str,
     'file_type': str,
     'file_config': dict,    # one of file_config_schemas
     Optional('final_memo'): [str],
