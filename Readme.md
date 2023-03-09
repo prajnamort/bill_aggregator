@@ -1,6 +1,6 @@
 # Bill Aggregator
 
-Bill Aggregator can simplfy your bookkeeping by aggregating all your bills from different formats/schemas into a single, unified file.
+Bill Aggregator simplfies your bookkeeping by aggregating all your bills (different formats/schemas) into a single file.
 
 Supported bill file formats:
 
@@ -30,16 +30,13 @@ pip3 install -r requirements.txt
 
 ### 1. Download your bills
 
-Put all your bill files into a dedicated directory, like this:
+Download all your bill files into a dedicated directory, like this:
 
 ```
 <bills_directory>/
 |- Bank_Account_1.csv
 |- Bank_Account_2.csv
 |- Bank_Account_3.csv
-|- Credit_Card_1.csv
-|- Credit_Card_2.csv
-|- Paypal.csv
 |- ...
 ```
 
