@@ -1,10 +1,12 @@
 from bill_aggregator.consts import (
     DEFAULT_AGG, DEFAULT_SEP_CUR_AGG, FINAL_MEMO_SEPARATOR, FILE_EXTENSIONS,
     ACCT, CUR, MEMO, DATE, TIME,
+    ExtractLoggerScope, ExtractLoggerField,
 )
 from bill_aggregator.exceptions import BillAggregatorException
 from bill_aggregator.extractors import ExtractorClsMapping
 from bill_aggregator.exporters import ExporterClsMapping
+from bill_aggregator.utils.log_util import extract_logger, with_extract_logger
 
 
 class BillAggregator:
@@ -54,7 +56,8 @@ class BillAggregator:
         file_conf = bill_group_conf['file_config']
         final_memo_conf = bill_group_conf.get('final_memo', None)
 
-        print(f'Extracting bill_group: {account} ({currency})')
+        # logging
+        extract_logger.log(ExtractLoggerScope.GROUP, ExtractLoggerField.ACCT, value=account)
 
         default_file_pattern = f'{account}*'
         file_pattern = bill_group_conf.get('file_pattern', default_file_pattern)
@@ -62,6 +65,9 @@ class BillAggregator:
         files = [file for file in files if file.suffix.lower() in FILE_EXTENSIONS[file_type]]
 
         for file in files:
+            # logging
+            extract_logger.log(ExtractLoggerScope.FILE, ExtractLoggerField.FILE, value=file.name)
+
             results = self.extract_file(
                 file=file,
                 file_type=file_type,
@@ -73,14 +79,23 @@ class BillAggregator:
                 final_memo_conf=final_memo_conf)
             self.extracted_results.extend(results)
 
+            # logging
+            extract_logger.log(
+                ExtractLoggerScope.FILE, ExtractLoggerField.ROWS, value=len(results))
+            extract_logger.bill_file_ends()
+
             # for row in results:
             #     print(row)
             # print(f'rows: {len(results)}')
             # print(f'total rows: {len(self.extracted_results)}')
 
+    @with_extract_logger
     def extract_bills(self):
         for bill_group_conf in self.bill_group_confs:
             self.extract_bill_group(bill_group_conf)
+
+            # logging
+            extract_logger.bill_group_ends()
 
     def aggregate_bills(self):
         def _sort_key(row):

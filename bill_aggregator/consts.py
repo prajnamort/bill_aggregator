@@ -64,3 +64,30 @@ class ExportType:
     XLSX = 'xlsx'
 
     ALL = [XLSX]
+
+
+# Loggers
+class LogLevel:
+    INFO = 'info'
+    WARN = 'warn'
+    ERROR = 'error'
+
+    ALL = [INFO, WARN, ERROR]
+
+
+class ExtractLoggerScope:
+    GROUP = 'bill_group'
+    FILE = 'bill_file'
+
+    ALL = [GROUP, FILE]
+
+
+class ExtractLoggerField:
+    ACCT = 'account'
+    FILE = 'file'
+    ROWS = 'rows'
+    SKIP_ROWS = 'skip_rows'
+    MSG = 'message'
+
+    GROUP_ALL = [ACCT, MSG]
+    FILE_ALL = [FILE, ROWS, SKIP_ROWS, MSG]

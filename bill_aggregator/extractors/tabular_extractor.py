@@ -8,11 +8,13 @@ import dateutil.parser
 import charset_normalizer
 
 from bill_aggregator.consts import (
-    MIN_BILL_COLUMNS, WARN_TRIM_ROW_COUNT, AmountFormat, AmountType,
-    FIELDS, EXT_FIELDS, COL, FORMAT, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE
+    MIN_BILL_COLUMNS, AmountFormat, AmountType,
+    FIELDS, EXT_FIELDS, COL, FORMAT, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE,
+    ExtractLoggerScope, ExtractLoggerField,
 )
 from bill_aggregator.exceptions import BillAggregatorException
 from bill_aggregator.utils import amount_util
+from bill_aggregator.utils.log_util import extract_logger
 from .base_extractor import BaseExtractor
 
 
@@ -138,9 +140,12 @@ class TabularExtractor(BaseExtractor):
 
         if _sort_key(self.rows[0]) > _sort_key(self.rows[-1]):
             self.rows.reverse()
-        if not all(_sort_key(self.rows[i]) <= _sort_key(self.rows[i+1]) for i in range(len(self.rows) - 1)):
-            print('Sort performed')
+        if not all(_sort_key(self.rows[i]) <= _sort_key(self.rows[i+1])
+                   for i in range(len(self.rows) - 1)):
             self.rows.sort(key=_sort_key)    # stable sort (if same key, order is preserved)
+            # logging
+            extract_logger.log(
+                ExtractLoggerScope.FILE, ExtractLoggerField.MSG, value='Re-sorted')
 
     def _process_name_field(self):
         name_col = self.file_conf[FIELDS][NAME][COL]
@@ -268,8 +273,6 @@ class TabularExtractor(BaseExtractor):
 
     def extract_bills(self):
         """Main entry point for Extractor"""
-        print(f'Extracting file: {self.file.name}')
-
         self.load_file()
         self.prepare_data()
         self.process_data()
@@ -290,9 +293,12 @@ class CsvExtractor(TabularExtractor):
             result = charset_normalizer.from_path(self.file).best()
             if not result:
                 raise BillAggregatorException('Cannot detect encoding')
-            print(
-                f'Detected encoding: {result.encoding}, BOM: {result.bom}, '
-                f'confidence: {1.0 - result.chaos}')
+
+            # logging
+            msg = f'Detected encoding: {result.encoding}{" (BOM)" if result.bom else ""}, ' \
+                  f'confidence: {1.0 - result.chaos}'
+            extract_logger.log(ExtractLoggerScope.FILE, ExtractLoggerField.MSG, value=msg)
+
             file_func = partial(StringIO, str(result))
 
         with file_func() as f:
@@ -313,10 +319,11 @@ class CsvExtractor(TabularExtractor):
         self.column_count = column_count
         self.rows = [row for row in self.rows if len(row) == self.column_count]
 
+        # logging
         new_row_count = len(self.rows)
         diff_row_count = orig_row_count - new_row_count
-        if diff_row_count >= WARN_TRIM_ROW_COUNT:
-            print(f'Trimed {diff_row_count} rows.')
+        extract_logger.log(
+            ExtractLoggerScope.FILE, ExtractLoggerField.SKIP_ROWS, value=diff_row_count)
 
     def load_file(self):
         self._read_csv_file()
@@ -335,10 +342,11 @@ class XlsExtractor(TabularExtractor):
         sheet = xlrd.open_workbook(self.file).sheet_by_index(0)
         start = 0 + self.skiprows
         end = (sheet.nrows - 1) - self.skipfooters
+        total_skiprows = self.skiprows + self.skipfooters
 
         if start > end:
             raise BillAggregatorException(
-                f'Need to skip {self.skiprows}+{self.skipfooters} rows, '
+                f'Need to skip {total_skiprows} rows, '
                 f'but only {sheet.nrows} rows found')
 
         results = []
@@ -347,3 +355,7 @@ class XlsExtractor(TabularExtractor):
             results.append(row)
         self.rows = results
         self.column_count = len(self.rows[0])
+
+        # logging
+        extract_logger.log(
+            ExtractLoggerScope.FILE, ExtractLoggerField.SKIP_ROWS, value=total_skiprows)
