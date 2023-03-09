@@ -83,25 +83,25 @@ class TimeColumn(BaseColumn):
 class AccountColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, row_data[ACCT] or '')
+        self.worksheet.write(row_idx, self.col_idx, row_data[ACCT] or '')
 
 
 class NameColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, row_data[NAME] or '')
+        self.worksheet.write(row_idx, self.col_idx, row_data[NAME] or '')
 
 
 class MemoColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, row_data[MEMO] or '')
+        self.worksheet.write(row_idx, self.col_idx, row_data[MEMO] or '')
 
 
 class CurrencyColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, row_data[CUR] or '')
+        self.worksheet.write(row_idx, self.col_idx, row_data[CUR] or '')
 
 
 class AmountColumn(BaseColumn):
@@ -158,11 +158,11 @@ class AmountTypeColumn(BaseColumn):
 
     def write_cell(self, row_idx, row_data):
         if row_data[AMT_TYPE] == AmountType.IN:
-            self.worksheet.write_string(row_idx, self.col_idx, self.inbound_value)
+            self.worksheet.write(row_idx, self.col_idx, self.inbound_value)
         elif row_data[AMT_TYPE] == AmountType.OUT:
-            self.worksheet.write_string(row_idx, self.col_idx, self.outbound_value)
+            self.worksheet.write(row_idx, self.col_idx, self.outbound_value)
         elif row_data[AMT_TYPE] == AmountType.UNKNOWN:
-            self.worksheet.write_string(row_idx, self.col_idx, self.unknown_value)
+            self.worksheet.write(row_idx, self.col_idx, self.unknown_value)
 
     def apply_conditional_format(self):
         self.worksheet.conditional_format(
@@ -189,7 +189,7 @@ class CustomColumn(BaseColumn):
         self.value = self.column_conf['data']['value']
 
     def write_cell(self, row_idx, row_data):
-        self.worksheet.write_string(row_idx, self.col_idx, self.value or '')
+        self.worksheet.write(row_idx, self.col_idx, self.value or '')
 
 
 field_to_column_map = {
