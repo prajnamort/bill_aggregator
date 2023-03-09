@@ -7,6 +7,8 @@ Transform and aggregate all kinds of bills into a unified, beautiful Excel Table
 - auto-detect datetime formats (`2023-02-11`, `20230211`, `11 FEB 2023`, `11/02/2023`, `2/11/2023`...)
 - auto-detect number formats (`-$6,593.22`, `-Eu6.593,22`, `-6 593,22 грн.`, `￥6,593.22-`, `(HK$6,593.22)`...)
 
+For a real-world example, see [Examples](/examples).
+
 ## Installation
 
 Clone this repository:
@@ -52,7 +54,7 @@ Edit the config file:
 
 How to write the config?
 
-- For well-known bank accounts, just copy config from [Config Templates](/config_templates).
+- For well-known bank accounts, just copy config from [config_templates](/config_templates).
   (If your bank account can't be found here, you are more than welcome to contribute!)
 
 ### 3. Run the program

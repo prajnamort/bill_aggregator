@@ -1,0 +1,10 @@
+Following data is valid as of 20230212174511 (Year/Month/Day/Hour/Minute/Second)
+
+
+First Bank Card,Transaction Type,Date Posted, Transaction Amount,Description
+
+
+'5273********4865',CREDIT,20230112,100.0,[CW]INTERAC ETRNSFR RECVD    JON SNOW             20223748273728572        
+'5273********4865',CREDIT,20230112,100.0,[CW]INTERAC ETRNSFR RECVD    JON SNOW             20228577267343846        
+'5273********4865',DEBIT,20230116,-70.0,[CW]SCOTIA VISA                                                                
+'5273********4865',DEBIT,20230114,-130.0,[CW]HSBC MC                                                                    

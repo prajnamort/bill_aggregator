@@ -2,8 +2,22 @@
 # config for reading bill files
 bill_groups:
 
-  ### This section is just an example ###
-  - account: "Bank_Account_1"
+  - account: "BMO_Chequing"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Date Posted"
+        name:
+          column: "Description"
+        amount:
+          format: OneColumnWithSign
+          column: "Transaction Amount"
+
+  - account: "BMO_Credit"
+    currency: "CAD"
     file_type: csv
     file_config:
       has_header: true
@@ -15,26 +29,10 @@ bill_groups:
         amount:
           format: OneColumnWithSign
           column: "Transaction Amount"
+          is_outbound_positive: true
 
-  ### This section is just an example ###
-  - account: "Bank_Account_2"
-    file_type: csv
-    file_config:
-      has_header: true
-      fields:
-        date:
-          column: "Date"
-        name:
-          column: "Transaction Details"
-        amount:
-          format: TwoColumns
-          inbound:
-            column: "Funds In"
-          outbound:
-            column: "Funds Out"
-
-  ### This section is just an example ###
-  - account: "Bank_Account_3"
+  - account: "CIBC_Chequing"
+    currency: "CAD"
     file_type: csv
     file_config:
       has_header: false
@@ -50,10 +48,6 @@ bill_groups:
           outbound:
             column: 2
 
-  ### Add more bill_groups below ####
-  # ...
-  # ...
-  # ...
 
 # config for exporting results
 export_to: xlsx
