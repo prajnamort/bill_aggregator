@@ -3,9 +3,9 @@
 Transform and aggregate all kinds of bills into a unified, beautiful Excel Table.
 
 - support different file formats (csv, xls)
-- auto-detect file encodings (`ascii`, `utf-8`, `utf-16`, `gbk`, `big5`...)
-- auto-detect datetime formats (`2023-02-11`, `20230211`, `11 FEB 2023`, `11/02/2023`, `2/11/2023`...)
-- auto-detect number formats (`-$6,593.22`, `-Eu6.593,22`, `-6 593,22 грн.`, `￥6,593.22-`, `(HK$6,593.22)`...)
+- auto-detect file encodings (`utf-8`, `utf-16`, `gbk`, `big5`...)
+- auto-detect datetime formats (`2023-02-11`, `11 FEB 2023`, `11/02/2023`, `2/11/2023`...)
+- auto-detect number formats (`-$6,593.22`, `-Eu6.593,22`, `-6 593,22 грн.`, `(HK$6,593.22)`...)
 
 For a real-world example, see [Examples](/examples).
 
