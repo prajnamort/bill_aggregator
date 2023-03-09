@@ -1,8 +1,6 @@
 # Bill Aggregator
 
-Bill Aggregator is a program that simplifies your personal/family bookkeeping.
-
-It aggregates all your bills from different formats/schemas into a single, unified file.
+Bill Aggregator can simplfy your bookkeeping by aggregating all your bills from different formats/schemas into a single, unified file.
 
 Supported bill file formats:
 
@@ -61,8 +59,8 @@ Edit the config file:
 
 How to write the config?
 
-- For well-known bank accounts, you can copy config from [Config Templates](/config_templates) into your `config.yaml`.
-  (If your bank account can't be found there, you are more than welcome to contribute!)
+- For well-known bank accounts, just copy config from [Config Templates](/config_templates).
+  (If your bank account can't be found here, you are more than welcome to contribute!)
 
 ### 3. Run the program
 
