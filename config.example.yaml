@@ -15,7 +15,6 @@ bill_groups:
         amount:
           format: OneColumnWithSign
           column: "Transaction Amount"
-          is_outbound_positive: true
 
   ### This section is just an example ###
   - account: "Bank_Account_2"

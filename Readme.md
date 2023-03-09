@@ -1,15 +1,11 @@
 # Bill Aggregator
 
-Bill Aggregator simplfies your bookkeeping by aggregating all your bills (different formats/schemas) into a single file.
+Transform and aggregate all kinds of bills into a unified, beautiful Excel Table.
 
-Supported bill file formats:
-
-- csv
-- xls
-
-Supported export file formats:
-
-- xlsx (Excel 2007+)
+- support different file formats (csv, xls)
+- auto-detect file encodings (`ascii`, `utf-8`, `utf-16`, `gbk`, `big5`...)
+- auto-detect datetime formats (`2023-02-11`, `20230211`, `11 FEB 2023`, `11/02/2023`, `2/11/2023`...)
+- auto-detect number formats (`-$6,593.22`, `-Eu6.593,22`, `-6 593,22 грн.`, `￥6,593.22-`, `(HK$6,593.22)`...)
 
 ## Installation
 
