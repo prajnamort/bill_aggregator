@@ -1,0 +1,14 @@
+  - account: "BMO_Credit"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Transaction Date"
+        name:
+          column: "Description"
+        amount:
+          format: OneColumnWithSign
+          column: "Transaction Amount"
+          is_outbound_positive: true

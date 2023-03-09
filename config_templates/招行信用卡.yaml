@@ -1,0 +1,21 @@
+  - account: "招行信用卡"
+    currency: "CNY"
+    file_type: csv
+    file_config:
+      encoding: "gb18030"
+      has_header: true
+      fields:
+        date:
+          column: "交易日期"
+        name:
+          column: "交易摘要"
+        amount:
+          format: OneColumnWithSign
+          column: "人民币金额"
+          is_outbound_positive: true
+      extra_fields:
+        transaction_location:
+          column: "交易地点"
+        amount_at_location:
+          column: "交易地金额"
+    final_memo: [transaction_location, amount_at_location]

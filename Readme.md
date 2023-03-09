@@ -59,6 +59,11 @@ Edit the config file:
 <editor> config.yaml
 ```
 
+How to write the config?
+
+- For well-known bank accounts, you can copy config from [Config Templates](/config_templates) into your `config.yaml`.
+  (If your bank account can't be found there, you are more than welcome to contribute!)
+
 ### 3. Run the program
 
 Now run the program:

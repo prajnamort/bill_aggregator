@@ -1,0 +1,14 @@
+  - account: "HSBC_Chequing"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: false
+      fields:
+        date:
+          column: 0
+          dayfirst: true
+        name:
+          column: 1
+        amount:
+          format: OneColumnWithSign
+          column: 2

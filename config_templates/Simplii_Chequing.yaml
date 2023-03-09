@@ -1,0 +1,16 @@
+  - account: "Simplii_Chequing"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Date"
+        name:
+          column: "Transaction Details"
+        amount:
+          format: TwoColumns
+          inbound:
+            column: "Funds In"
+          outbound:
+            column: "Funds Out"

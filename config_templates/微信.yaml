@@ -1,0 +1,30 @@
+  - account: "微信"
+    currency: "CNY"
+    file_type: csv
+    file_config:
+      encoding: "utf-8-sig"
+      has_header: true
+      fields:
+        date:
+          column: "交易时间"
+        name:
+          column: "商品"
+        amount:
+          format: OneColumnWithIndicators
+          column: "金额(元)"
+          indicators:
+            - column: "收/支"
+              inbound_value: "收入"
+              outbound_value: "支出"
+      extra_fields:
+        transaction_type:
+          column: "交易类型"
+        transaction_party:
+          column: "交易对方"
+        payment_method:
+          column: "支付方式"
+        current_status:
+          column: "当前状态"
+        remark:
+          column: "备注"
+    final_memo: [transaction_type, transaction_party, remark, current_status, payment_method]

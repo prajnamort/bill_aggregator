@@ -1,0 +1,15 @@
+  - account: "Scotiabank_Chequing"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: false
+      fields:
+        date:
+          column: 0
+        name:
+          column: 4
+        memo:
+          column: 3
+        amount:
+          format: OneColumnWithSign
+          column: 1

@@ -1,0 +1,31 @@
+  - account: "支付宝"
+    currency: "CNY"
+    file_type: csv
+    file_config:
+      encoding: "gb18030"
+      has_header: true
+      fields:
+        date:
+          column: ["付款时间", "交易创建时间"]
+        name:
+          column: "商品名称"
+        amount:
+          format: OneColumnWithIndicators
+          column: "金额（元）"
+          indicators:
+            - column: "收/支"
+              inbound_value: "收入"
+              outbound_value: "支出"
+            - column: "资金状态"
+              inbound_value: "已收入"
+              outbound_value: "已支出"
+      extra_fields:
+        transaction_party:
+          column: "交易对方"
+        transaction_status:
+          column: "交易状态"
+        fund_status:
+          column: "资金状态"
+        remark:
+          column: "备注"
+    final_memo: [transaction_party, remark, transaction_status, fund_status]

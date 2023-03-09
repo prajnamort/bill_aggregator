@@ -1,0 +1,15 @@
+  - account: "Tangerine_Chequing"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Date"
+        name:
+          column: "Name"
+        memo:
+          column: "Memo"
+        amount:
+          format: OneColumnWithSign
+          column: "Amount"

@@ -1,0 +1,13 @@
+  - account: "BMO_Chequing"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Date Posted"
+        name:
+          column: "Description"
+        amount:
+          format: OneColumnWithSign
+          column: "Transaction Amount"

@@ -1,0 +1,21 @@
+  - account: "招行借记卡"
+    currency: "CNY"
+    file_type: csv
+    file_config:
+      encoding: "gb18030"
+      has_header: true
+      fields:
+        date:
+          column: "交易日期"
+        time:
+          column: "交易时间"
+        name:
+          column: "交易备注"
+        memo:
+          column: "交易类型"
+        amount:
+          format: TwoColumns
+          inbound:
+            column: "收入"
+          outbound:
+            column: "支出"

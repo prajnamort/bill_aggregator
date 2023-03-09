@@ -1,0 +1,28 @@
+  - account: "建行借记卡"
+    currency: "CNY"
+    file_type: xls
+    file_config:
+      skiprows: 5
+      skipfooters: 1
+      has_header: true
+      fields:
+        date:
+          column: "交易日期"
+        time:
+          column: "交易时间"
+        name:
+          column: "对方户名"
+        amount:
+          format: TwoColumns
+          inbound:
+            column: "收入"
+          outbound:
+            column: "支出"
+      extra_fields:
+        abstract:
+          column: "摘要"
+        transaction_location:
+          column: "交易地点"
+        transaction_currency:
+          column: "币种"
+    final_memo: [abstract, transaction_location, transaction_currency]

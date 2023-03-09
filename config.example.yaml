@@ -21,23 +21,6 @@ bill_groups:
   - account: "Bank_Account_2"
     file_type: csv
     file_config:
-      has_header: false
-      fields:
-        date:
-          column: 0
-        name:
-          column: 1
-        amount:
-          format: TwoColumns
-          inbound:
-            column: 3
-          outbound:
-            column: 2
-
-  ### This section is just an example ###
-  - account: "Bank_Account_3"
-    file_type: csv
-    file_config:
       has_header: true
       fields:
         date:
@@ -50,6 +33,23 @@ bill_groups:
             column: "Funds In"
           outbound:
             column: "Funds Out"
+
+  ### This section is just an example ###
+  - account: "Bank_Account_3"
+    file_type: csv
+    file_config:
+      has_header: false
+      fields:
+        date:
+          column: 0
+        name:
+          column: 1
+        amount:
+          format: TwoColumns
+          inbound:
+            column: 3
+          outbound:
+            column: 2
 
   ### Add more bill_groups below ####
   # ...

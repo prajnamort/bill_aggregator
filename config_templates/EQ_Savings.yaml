@@ -1,0 +1,13 @@
+  - account: "EQ_Savings"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: true
+      fields:
+        date:
+          column: "Date"
+        name:
+          column: "Description"
+        amount:
+          format: OneColumnWithSign
+          column: "Transfer"

@@ -1,0 +1,16 @@
+  - account: "CIBC_Chequing"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: false
+      fields:
+        date:
+          column: 0
+        name:
+          column: 1
+        amount:
+          format: TwoColumns
+          inbound:
+            column: 3
+          outbound:
+            column: 2

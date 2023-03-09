@@ -1,0 +1,13 @@
+  - account: "HSBC_Credit"
+    currency: "CAD"
+    file_type: csv
+    file_config:
+      has_header: false
+      fields:
+        date:
+          column: 0
+        name:
+          column: 2
+        amount:
+          format: OneColumnWithSign
+          column: 3

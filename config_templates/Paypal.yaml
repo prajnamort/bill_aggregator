@@ -1,0 +1,19 @@
+  - account: "Paypal"
+    currency: "CAD"   # Change this to your Paypal's currency!
+    file_type: csv
+    file_config:
+      encoding: "utf-8-sig"
+      has_header: true
+      fields:
+        date:
+          column: "Date"
+          dayfirst: true
+        time:
+          column: "Time"
+        name:
+          column: "Name"
+        memo:
+          column: "Type"
+        amount:
+          format: OneColumnWithSign
+          column: "Amount"
