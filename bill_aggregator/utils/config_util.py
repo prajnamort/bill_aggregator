@@ -5,7 +5,7 @@ from bill_aggregator.consts import (
     DEFAULT_CONFIG_FILE, FileType, AmountFormat, ExportType,
     FIELDS, EXT_FIELDS, COL, FORMAT, ACCT, CUR, DATE, TIME, NAME, MEMO, AMT,
 )
-from bill_aggregator.exceptions import BillAggregatorException
+from bill_aggregator.exceptions import BillAggException
 
 
 config_schema = Schema({
@@ -114,7 +114,7 @@ class ConfigValidator:
             # validate config for exporting results
             export_type = conf['export_to']
             if export_type not in ExportType.ALL:
-                raise BillAggregatorException(f'invalid export type: {export_type}')
+                raise BillAggException(f'Invalid export type: {export_type}')
             cls.validate_export_config(export_type, conf['export_config'])
 
             # print("Configuration is valid.")
@@ -126,7 +126,7 @@ class ConfigValidator:
         bill_group_schema.validate(bill_group_conf)
         file_type = bill_group_conf['file_type']
         if file_type not in FileType.ALL:
-            raise BillAggregatorException(f'invalid file_type: {file_type}')
+            raise BillAggException(f'Invalid file_type: {file_type}')
 
         file_conf = bill_group_conf['file_config']
         if file_type in [FileType.CSV, FileType.XLS]:
@@ -137,10 +137,10 @@ class ConfigValidator:
     @classmethod
     def validate_amount_config(cls, amt_conf):
         if FORMAT not in amt_conf:
-            raise BillAggregatorException('format must be specified for amount field')
+            raise BillAggException('Format must be specified for amount field')
         amt_format = amt_conf[FORMAT]
         if amt_format not in AmountFormat.ALL:
-            raise BillAggregatorException(f'invalid format for amount field: {amt_format}')
+            raise BillAggException(f'Invalid format for amount field: {amt_format}')
         amount_config_schemas[amt_format].validate(amt_conf)
 
     @classmethod

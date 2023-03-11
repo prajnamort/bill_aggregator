@@ -3,10 +3,10 @@ from bill_aggregator.consts import (
     ACCT, CUR, MEMO, DATE, TIME,
     ExtractLoggerScope, ExtractLoggerField,
 )
-from bill_aggregator.exceptions import BillAggregatorException
+from bill_aggregator.exceptions import BillAggException
 from bill_aggregator.extractors import ExtractorClsMapping
 from bill_aggregator.exporters import ExporterClsMapping
-from bill_aggregator.utils.log_util import extract_logger, with_extract_logger
+from bill_aggregator.utils.log_util import extract_logger, LogContextManager
 
 
 class BillAggregator:
@@ -25,8 +25,10 @@ class BillAggregator:
     def _process_final_memo(self, results, final_memo_conf):
         field_list = final_memo_conf
         # check final_memo_conf
-        if any(f not in row for f in field_list for row in results):
-            raise BillAggregatorException('final_memo specified unknown field')
+        for f in field_list:
+            for row in results:
+                if f not in row:
+                    raise BillAggException(f'Unknown field specified in final_memo: {f}')
 
         for row in results:
             memo = FINAL_MEMO_SEPARATOR.join(row[f] for f in field_list if row[f])
@@ -51,51 +53,43 @@ class BillAggregator:
 
     def extract_bill_group(self, bill_group_conf):
         account = bill_group_conf[ACCT]
-        currency = bill_group_conf.get(CUR, None)
-        file_type = bill_group_conf['file_type']
-        file_conf = bill_group_conf['file_config']
-        final_memo_conf = bill_group_conf.get('final_memo', None)
 
-        # logging
-        extract_logger.log(ExtractLoggerScope.GROUP, ExtractLoggerField.ACCT, value=account)
+        with LogContextManager(scope=ExtractLoggerScope.GROUP, account=account):
+            currency = bill_group_conf.get(CUR, None)
+            file_type = bill_group_conf['file_type']
+            file_conf = bill_group_conf['file_config']
+            final_memo_conf = bill_group_conf.get('final_memo', None)
 
-        default_file_pattern = f'{account}*'
-        file_pattern = bill_group_conf.get('file_pattern', default_file_pattern)
-        files = sorted(self.workdir.glob(file_pattern))
-        files = [file for file in files if file.suffix.lower() in FILE_EXTENSIONS[file_type]]
+            default_file_pattern = f'{account}*'
+            file_pattern = bill_group_conf.get('file_pattern', default_file_pattern)
+            files = sorted(self.workdir.glob(file_pattern))
+            files = [file for file in files if file.suffix.lower() in FILE_EXTENSIONS[file_type]]
 
-        for file in files:
-            # logging
-            extract_logger.log(ExtractLoggerScope.FILE, ExtractLoggerField.FILE, value=file.name)
+            for file in files:
+                with LogContextManager(scope=ExtractLoggerScope.FILE, file=file.name):
+                    results = self.extract_file(
+                        file=file,
+                        file_type=file_type,
+                        file_conf=file_conf)
+                    results = self.postprocess_extracted_results(
+                        results=results,
+                        account=account,
+                        currency=currency,
+                        final_memo_conf=final_memo_conf)
+                    self.extracted_results.extend(results)
 
-            results = self.extract_file(
-                file=file,
-                file_type=file_type,
-                file_conf=file_conf)
-            results = self.postprocess_extracted_results(
-                results=results,
-                account=account,
-                currency=currency,
-                final_memo_conf=final_memo_conf)
-            self.extracted_results.extend(results)
+                    # logging
+                    extract_logger.log(
+                        ExtractLoggerScope.FILE, ExtractLoggerField.ROWS, value=len(results))
 
-            # logging
-            extract_logger.log(
-                ExtractLoggerScope.FILE, ExtractLoggerField.ROWS, value=len(results))
-            extract_logger.bill_file_ends()
+                    # for row in results:
+                    #     print(row)
+                    # print(f'rows: {len(results)}')
+                    # print(f'total rows: {len(self.extracted_results)}')
 
-            # for row in results:
-            #     print(row)
-            # print(f'rows: {len(results)}')
-            # print(f'total rows: {len(self.extracted_results)}')
-
-    @with_extract_logger
     def extract_bills(self):
         for bill_group_conf in self.bill_group_confs:
             self.extract_bill_group(bill_group_conf)
-
-            # logging
-            extract_logger.bill_group_ends()
 
     def aggregate_bills(self):
         def _sort_key(row):

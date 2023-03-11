@@ -79,8 +79,8 @@ class Color:
     OKCYAN = colorama.Fore.CYAN
     OKGREEN = colorama.Fore.GREEN
     OKWHITE = colorama.Fore.WHITE
-    WARNING = colorama.Fore.YELLOW
-    FAIL = colorama.Fore.RED
+    WARN = colorama.Fore.YELLOW
+    ERROR = colorama.Fore.RED
     ENDC = colorama.Style.RESET_ALL
 
     def disable(self):
@@ -88,8 +88,8 @@ class Color:
         self.HEADER = ''
         self.OKCYAN = ''
         self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
+        self.WARN = ''
+        self.ERROR = ''
         self.ENDC = ''
 
 

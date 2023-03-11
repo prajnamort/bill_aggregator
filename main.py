@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import pathlib
+import sys
 
 from bill_aggregator import consts
-from bill_aggregator import exceptions
 from bill_aggregator.utils import config_util
 from bill_aggregator.aggregator import BillAggregator
 
@@ -21,13 +21,17 @@ def main():
         help=f'bills directory (default: {consts.DEFAULT_WORKDIR})')
     args = parser.parse_args()
 
-    config_file = pathlib.Path(args.conf or consts.DEFAULT_CONFIG_FILE).absolute()
+    orig_fp = args.conf or consts.DEFAULT_CONFIG_FILE
+    config_file = pathlib.Path(orig_fp).absolute()
     if not config_file.is_file():
-        raise exceptions.BillAggregatorException(f'{config_file}: no such file')
+        print(f'{consts.Color.ERROR}No such config file: {orig_fp}{consts.Color.ENDC}')
+        sys.exit(1)
 
-    workdir = pathlib.Path(args.dir or consts.DEFAULT_WORKDIR).absolute()
+    orig_dp = args.dir or consts.DEFAULT_WORKDIR
+    workdir = pathlib.Path(orig_dp).absolute()
     if not workdir.is_dir():
-        raise exceptions.BillAggregatorException(f'{workdir}: no such directory')
+        print(f'{consts.Color.ERROR}No such directory: {orig_dp}{consts.Color.ENDC}')
+        sys.exit(1)
 
     # load and validate config file
     conf = config_util.load_yaml_config(file=config_file)

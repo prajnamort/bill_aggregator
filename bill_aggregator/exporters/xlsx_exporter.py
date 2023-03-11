@@ -7,7 +7,7 @@ from xlsxwriter.utility import xl_rowcol_to_cell
 from bill_aggregator.consts import (
     AmountType, RESULTS_DIR,
     ACCT, CUR, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE)
-from bill_aggregator.exceptions import BillAggregatorException
+from bill_aggregator.exceptions import BillAggException
 
 
 FONT_SIZE = 11  # This global value may be changed
@@ -226,7 +226,7 @@ class XlsxExporter:
         elif data_type == 'custom':
             return CustomColumn
         else:
-            raise BillAggregatorException(f'Invalid data type: {data_type}')
+            raise BillAggException(f'Invalid data type: {data_type}')
 
     def init_workbook(self):
         nrows = len(self.data) + HEADER_ROWS
@@ -291,8 +291,8 @@ class XlsxExporter:
             elif isinstance(column, AmountTypeColumn):
                 amount_type_column = column
         if (amount_column is not None) and (amount_type_column is None):
-            raise BillAggregatorException(
-                'You must export "amount_type" column if you export "amount" column, '
+            raise BillAggException(
+                'You must export "amount_type" with "amount" together, '
                 'since amount_type is sometimes unknown.'
             )
         cell_string = xl_rowcol_to_cell(HEADER_ROWS, amount_type_column.col_idx)

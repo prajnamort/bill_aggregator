@@ -1,7 +1,7 @@
 import re
 from decimal import Decimal
 
-from bill_aggregator.exceptions import BillAggregatorException
+from bill_aggregator.exceptions import BillAggException
 
 
 REAL_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -87,6 +87,6 @@ def detect_decimal_separator(amount):
         decimal_separator = DEFAULT_DECIMAL_SEP
 
     if amount.count(decimal_separator) >= 2:
-        raise BillAggregatorException('Cannot detect decimal_separator')
+        raise BillAggException(f'Cannot detect decimal_separator: {amount}')
 
     return decimal_separator

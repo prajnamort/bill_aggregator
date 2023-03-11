@@ -1,8 +1,7 @@
-from functools import wraps
-
 from bill_aggregator.consts import (
     LogLevel, ExtractLoggerScope, ExtractLoggerField, Color,
 )
+from bill_aggregator.exceptions import BillAggBaseException, BillAggException
 from bill_aggregator.utils.string_util import fit_string, Align
 
 
@@ -125,9 +124,9 @@ class ExtractLogger:
     def print_line(self, account=None, file=None, rows=None, message=None):
         def _get_color_by_level(level, default=''):
             if level == LogLevel.ERROR:
-                return Color.FAIL
+                return Color.ERROR
             elif level == LogLevel.WARN:
-                return Color.WARNING
+                return Color.WARN
             return default
 
         if not self.header_printed:
@@ -240,8 +239,43 @@ class ExtractLogger:
 extract_logger = ExtractLogger()
 
 
-def with_extract_logger(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        return f(*args, **kwargs)
-    return wrapper
+class LogContextManager:
+
+    def __init__(self, scope, account=None, file=None):
+        assert scope in ExtractLoggerScope.ALL
+        if scope == ExtractLoggerScope.GROUP:
+            assert account is not None
+        elif scope == ExtractLoggerScope.FILE:
+            assert file is not None
+
+        self.scope = scope
+        self.account = account
+        self.file = file
+
+    def __enter__(self):
+        if self.scope == ExtractLoggerScope.GROUP:
+            extract_logger.log(self.scope, ExtractLoggerField.ACCT, value=self.account)
+        elif self.scope == ExtractLoggerScope.FILE:
+            extract_logger.log(self.scope, ExtractLoggerField.FILE, value=self.file)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_val is not None and not hasattr(exc_val, 'logged_by_bill_aggregator'):
+            if isinstance(exc_val, BillAggBaseException):
+                message = exc_val.message
+            else:
+                message = str(exc_val)
+            message = message or 'Un-specified Error'
+
+            extract_logger.log(self.scope, ExtractLoggerField.MSG,
+                               value=message, level=LogLevel.ERROR)
+            exc_val.logged_by_bill_aggregator = True
+
+        if self.scope == ExtractLoggerScope.GROUP:
+            extract_logger.bill_group_ends()
+        elif self.scope == ExtractLoggerScope.FILE:
+            extract_logger.bill_file_ends()
+
+        suppress = False
+        if exc_val is not None and isinstance(exc_val, BillAggException):
+            suppress = True
+        return suppress
