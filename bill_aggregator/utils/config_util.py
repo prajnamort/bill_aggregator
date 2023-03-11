@@ -117,7 +117,7 @@ class ConfigValidator:
                 raise BillAggregatorException(f'invalid export type: {export_type}')
             cls.validate_export_config(export_type, conf['export_config'])
 
-            print("Configuration is valid.")
+            # print("Configuration is valid.")
         except SchemaError as se:
             raise se
 

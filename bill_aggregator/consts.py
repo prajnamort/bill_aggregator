@@ -1,3 +1,6 @@
+import colorama
+
+
 # Default inputs
 DEFAULT_CONFIG_FILE = 'config.yaml'
 DEFAULT_WORKDIR = 'bills/'
@@ -66,13 +69,38 @@ class ExportType:
     ALL = [XLSX]
 
 
-# Loggers
+# Output and logs
+colorama.just_fix_windows_console()
+
+
+class Color:
+    BOLD = colorama.Style.BRIGHT
+    HEADER = BOLD + colorama.Fore.MAGENTA
+    OKCYAN = colorama.Fore.CYAN
+    OKGREEN = colorama.Fore.GREEN
+    OKWHITE = colorama.Fore.WHITE
+    WARNING = colorama.Fore.YELLOW
+    FAIL = colorama.Fore.RED
+    ENDC = colorama.Style.RESET_ALL
+
+    def disable(self):
+        self.BOLD = ''
+        self.HEADER = ''
+        self.OKCYAN = ''
+        self.OKGREEN = ''
+        self.WARNING = ''
+        self.FAIL = ''
+        self.ENDC = ''
+
+
 class LogLevel:
-    INFO = 'info'
-    WARN = 'warn'
-    ERROR = 'error'
+    ERROR = 40
+    WARN = 30
+    INFO = 20
 
     ALL = [INFO, WARN, ERROR]
+    DEFAULT = INFO
+    NONE = 0
 
 
 class ExtractLoggerScope:

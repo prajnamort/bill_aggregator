@@ -145,7 +145,8 @@ class TabularExtractor(BaseExtractor):
             self.rows.sort(key=_sort_key)    # stable sort (if same key, order is preserved)
             # logging
             extract_logger.log(
-                ExtractLoggerScope.FILE, ExtractLoggerField.MSG, value='Re-sorted')
+                ExtractLoggerScope.FILE, ExtractLoggerField.MSG,
+                value='Re-sorted by transaction date')
 
     def _process_name_field(self):
         name_col = self.file_conf[FIELDS][NAME][COL]
@@ -295,8 +296,7 @@ class CsvExtractor(TabularExtractor):
                 raise BillAggregatorException('Cannot detect encoding')
 
             # logging
-            msg = f'Detected encoding: {result.encoding}{" (BOM)" if result.bom else ""}, ' \
-                  f'confidence: {1.0 - result.chaos}'
+            msg = f'Detected encoding: {result.encoding} (confidence: {1.0 - result.chaos:.2})'
             extract_logger.log(ExtractLoggerScope.FILE, ExtractLoggerField.MSG, value=msg)
 
             file_func = partial(StringIO, str(result))
