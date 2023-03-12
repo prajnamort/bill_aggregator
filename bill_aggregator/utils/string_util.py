@@ -3,6 +3,7 @@ import unicodedata
 
 PLACEHOLDER = '...'
 PLACEHOLDER_POS = -1
+WRAP_PUNCS = '!,-.:;?'
 
 
 class Align:
@@ -19,7 +20,6 @@ def char_width(char):
 
 
 def string_width(string):
-    # return string len including double count for double width characters
     return sum(char_width(c) for c in string)
 
 
@@ -74,3 +74,40 @@ def fit_string(string, width, align=Align.LEFT,
         return string + ' ' * (width - string_width(string))
     else:
         return ' ' * (width - string_width(string)) + string
+
+
+def wrap_string(string, width=70, long_word_tolerance=20):
+    assert width >= 1
+    assert long_word_tolerance >= 1
+    assert width > long_word_tolerance, 'width > long_word_tolerance'
+
+    if string_width(string) <= width:
+        return [string]
+
+    cur_pos = 0
+    cur_width = 0
+    for char in string:
+        cur_width += char_width(char)
+        if cur_width > width:
+            break
+        cur_pos += 1
+
+    split_pos = cur_pos
+    long_word = 0
+    for pos in range(cur_pos, 1, -1):
+        cur_char = string[pos-1]
+        next_char = string[pos]
+        if (next_char.isspace() or char_width(next_char) == 2
+            or cur_char.isspace() or char_width(cur_char) == 2 or cur_char in WRAP_PUNCS):
+            split_pos = pos
+            break
+        long_word += char_width(cur_char)
+        if long_word > long_word_tolerance:
+            break
+
+    first_line = string[:split_pos]
+    rest_lines = wrap_string(
+        string=string[split_pos:],
+        width=width,
+        long_word_tolerance=long_word_tolerance)
+    return [first_line, *rest_lines]

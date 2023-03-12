@@ -2,7 +2,7 @@ from bill_aggregator.consts import (
     LogLevel, ExtractLoggerScope, ExtractLoggerField, Color,
 )
 from bill_aggregator.exceptions import BillAggBaseException, BillAggException
-from bill_aggregator.utils.string_util import fit_string, Align
+from bill_aggregator.utils.string_util import Align, fit_string, wrap_string
 
 
 class LogData:
@@ -47,8 +47,11 @@ class ExtractLogger:
     LINE_FORMAT = '{grp_str}   {file_str}   {rows_str}   {msg_str}'
 
     def __init__(self):
-        self.data = []
         self.header_printed = False
+        self._reset_data()
+
+    def _reset_data(self):
+        self.data = []
 
     def _new_group_data(self):
         return {
@@ -133,39 +136,46 @@ class ExtractLogger:
             self.print_header()
             self.header_printed = True
 
-        grp_str = ' ' * self.GRP_WD
-        file_str = ' ' * self.FILE_WD
-        rows_str = ' ' * self.ROWS_WD
-        msg_str = ' ' * self.MSG_WD
+        msg_str_list = []
+        grp_str, file_str, rows_str, msg_str = '', '', '', ''
+        grp_color = Color.OKCYAN
+        file_color = Color.OKCYAN
+        rows_color = Color.OKGREEN
+        msg_color = Color.OKWHITE
         if account:
-            color = _get_color_by_level(account.level, default=Color.OKCYAN)
-            grp_str = fit_string(str(account.value), self.GRP_WD, placeholder_pos=-5)
-            grp_str = f'{color}{grp_str}{Color.ENDC}'
+            grp_str = str(account.value)
+            grp_color = _get_color_by_level(account.level, default=grp_color)
         if file:
-            color = _get_color_by_level(file.level, default=Color.OKCYAN)
-            file_str = fit_string(str(file.value), self.FILE_WD, placeholder_pos=-9)
-            file_str = f'{color}{file_str}{Color.ENDC}'
+            file_str = str(file.value)
+            file_color = _get_color_by_level(file.level, default=file_color)
         if rows:
-            color = _get_color_by_level(rows.level, default=Color.OKGREEN)
-            rows_str = fit_string(str(rows.value), self.ROWS_WD, align=Align.RIGHT)
-            rows_str = f'{color}{rows_str}{Color.ENDC}'
+            rows_str = str(rows.value)
+            rows_color = _get_color_by_level(rows.level, default=rows_color)
         if message:
-            color = _get_color_by_level(message.level, default=Color.OKWHITE)
-            msg_str = fit_string(str(message.value), self.MSG_WD)
-            msg_str = f'{color}{msg_str}{Color.ENDC}'
+            msg_str_list = wrap_string(message.value, width=self.MSG_WD)
+            msg_str = msg_str_list.pop(0)
+            msg_color = _get_color_by_level(message.level, default=msg_color)
+        grp_str = fit_string(grp_str, self.GRP_WD, placeholder_pos=-5)
+        file_str = fit_string(file_str, self.FILE_WD, placeholder_pos=-9)
+        rows_str = fit_string(rows_str, self.ROWS_WD, align=Align.RIGHT)
         print(self.LINE_FORMAT.format(
-            grp_str=grp_str,
-            file_str=file_str,
-            rows_str=rows_str,
-            msg_str=msg_str,
+            grp_str=f'{grp_color}{grp_str}{Color.ENDC}',
+            file_str=f'{file_color}{file_str}{Color.ENDC}',
+            rows_str=f'{rows_color}{rows_str}{Color.ENDC}',
+            msg_str=f'{msg_color}{msg_str}{Color.ENDC}',
         ))
+
+        for msg_str in msg_str_list:
+            print(self.LINE_FORMAT.format(
+                grp_str=' ' * self.GRP_WD,
+                file_str=' ' * self.FILE_WD,
+                rows_str=' ' * self.ROWS_WD,
+                msg_str=f'{msg_color}{msg_str}{Color.ENDC}',
+            ))
+
 
     def print_group_data(self, group_data):
         g_line = 0
-        for message in group_data['messages']:
-            account = group_data['account'] if g_line == 0 else None
-            self.print_line(account=account, message=message)
-            g_line += 1
 
         for file_data in group_data['files']:
             f_line = 0
@@ -176,11 +186,20 @@ class ExtractLogger:
                 self.print_line(account=account, file=file, rows=rows, message=message)
                 f_line += 1
                 g_line += 1
+
             if f_line == 0 and file_data['file']:
                 account = group_data['account'] if g_line == 0 else None
                 self.print_line(account=account, file=file_data['file'], rows=file_data['rows'])
                 f_line += 1
                 g_line += 1
+
+        f_line = 0
+        for message in group_data['messages']:
+            account = group_data['account'] if g_line == 0 else None
+            file = LogData('N/A', level=group_data['account'].level) if f_line == 0 else None
+            self.print_line(account=account, file=file, message=message)
+            f_line += 1
+            g_line += 1
 
         if g_line == 0 and group_data['account']:
             self.print_line(account=group_data['account'])
@@ -210,15 +229,12 @@ class ExtractLogger:
         return group_data
 
     def flush(self):
-        """Clear and print all data.
-
-        Always pop each data before printing to prevent infinite loop, since flush() will always
-        be executed while any exception catched.
-        """
-        while self.data:
-            group_data = self.data.pop(0)
+        """Print and clear all data."""
+        for group_data in self.data:
             group_data = self.sync_log_level(group_data)
             self.print_group_data(group_data)
+
+        self._reset_data()
 
     def bill_file_ends(self):
         if len(self.data) == 0 or len(self.data[-1]['files']) == 0:
