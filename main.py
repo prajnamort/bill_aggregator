@@ -24,7 +24,7 @@ def main():
     orig_fp = args.conf or consts.DEFAULT_CONFIG_FILE
     config_file = pathlib.Path(orig_fp).absolute()
     if not config_file.is_file():
-        print(f'{consts.Color.ERROR}No such config file: {orig_fp}{consts.Color.ENDC}')
+        print(f'{consts.Color.ERROR}No such file: {orig_fp}{consts.Color.ENDC}')
         sys.exit(1)
 
     orig_dp = args.dir or consts.DEFAULT_WORKDIR

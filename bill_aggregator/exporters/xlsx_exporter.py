@@ -6,8 +6,10 @@ from xlsxwriter.utility import xl_rowcol_to_cell
 
 from bill_aggregator.consts import (
     AmountType, RESULTS_DIR,
-    ACCT, CUR, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE)
+    ACCT, CUR, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE,
+    Color)
 from bill_aggregator.exceptions import BillAggException
+from bill_aggregator.utils.string_util import fit_string, Align
 
 
 FONT_SIZE = 11  # This global value may be changed
@@ -212,6 +214,7 @@ class XlsxExporter:
         self.export_conf = export_conf
         self.workdir = workdir
 
+        self.file = None
         self.workbook = None
         self.worksheet = None
         self.columns = []
@@ -237,8 +240,8 @@ class XlsxExporter:
         results_dir.mkdir(parents=True, exist_ok=True)
 
         # create excel file
-        file = results_dir / f'{self.aggregation}.xlsx'
-        self.workbook = xlsxwriter.Workbook(file)
+        self.file = results_dir / f'{self.aggregation}.xlsx'
+        self.workbook = xlsxwriter.Workbook(self.file)
         self.worksheet = self.workbook.add_worksheet(name=self.aggregation)
 
         # set default font size
@@ -316,3 +319,10 @@ class XlsxExporter:
         self.write_data()
         self.apply_conditional_format()
         self.save_workbook()
+
+        # logging
+        dest_str = '<bill_dir>/' + RESULTS_DIR + self.file.name
+        rows_str = str(len(self.data))
+        dest_str = fit_string(dest_str, width=30)
+        rows_str = fit_string(rows_str, width=5, align=Align.RIGHT)
+        print(f'{Color.OKCYAN}{dest_str}{Color.ENDC} {Color.OKGREEN}{rows_str}{Color.ENDC}')

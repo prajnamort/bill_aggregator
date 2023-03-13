@@ -48,6 +48,9 @@ class ExtractLogger:
 
     def __init__(self):
         self.header_printed = False
+        self.warn_count = 0
+        self.error_count = 0
+
         self._reset_data()
 
     def _reset_data(self):
@@ -115,7 +118,7 @@ class ExtractLogger:
     def print_header(self):
         grp_str = fit_string("Bill Group", self.GRP_WD)
         file_str = fit_string('Bill File', self.FILE_WD)
-        rows_str = fit_string('Count', self.ROWS_WD, align=Align.RIGHT)
+        rows_str = fit_string('Items', self.ROWS_WD, align=Align.RIGHT)
         msg_str = fit_string('Messages', self.MSG_WD)
         print(self.LINE_FORMAT.format(
             grp_str=f'{Color.HEADER}{grp_str}{Color.ENDC}',
@@ -173,7 +176,6 @@ class ExtractLogger:
                 msg_str=f'{msg_color}{msg_str}{Color.ENDC}',
             ))
 
-
     def print_group_data(self, group_data):
         g_line = 0
 
@@ -205,8 +207,8 @@ class ExtractLogger:
             self.print_line(account=group_data['account'])
             g_line += 1
 
-    def sync_log_level(self, group_data):
-        """Set log level from the highest level log."""
+    def sync_log_level_and_update_count(self, group_data):
+        """Set log level from the highest level log, update warning/error count."""
         group_max = LogLevel.NONE
         if group_data['account']:
             group_max = max(group_data['account'].level, group_max)
@@ -222,16 +224,25 @@ class ExtractLogger:
             for message in file_data['messages']:
                 file_max = max(message.level, file_max)
 
+            if file_max == LogLevel.ERROR:
+                self.error_count += 1
+            elif file_max == LogLevel.WARN:
+                self.warn_count += 1
             file_data['file'].level = file_max
             group_max = max(file_max, group_max)
 
+        if group_data['messages'] or not group_data['files']:
+            if group_max == LogLevel.ERROR:
+                self.error_count += 1
+            elif group_max == LogLevel.WARN:
+                self.warn_count += 1
         group_data['account'].level = group_max
         return group_data
 
     def flush(self):
         """Print and clear all data."""
         for group_data in self.data:
-            group_data = self.sync_log_level(group_data)
+            group_data = self.sync_log_level_and_update_count(group_data)
             self.print_group_data(group_data)
 
         self._reset_data()
@@ -251,11 +262,27 @@ class ExtractLogger:
         # flush
         self.flush()
 
+    def complete(self):
+        self.flush()
+        message = 'Extracting completed.'
+
+        warn_msg = f'{self.warn_count} warning{"" if self.warn_count == 1 else "s"}'
+        error_msg = f'{self.error_count} error{"" if self.error_count == 1 else "s"}'
+        warn_msg = f'{Color.WARN}{warn_msg}{Color.ENDC}'
+        error_msg = f'{Color.ERROR}{error_msg}{Color.ENDC}'
+        if self.warn_count and self.error_count:
+            message += f' ({warn_msg}, {error_msg})'
+        elif self.warn_count:
+            message += f' ({warn_msg})'
+        elif self.error_count:
+            message += f' ({error_msg})'
+        print(message)
+
 
 extract_logger = ExtractLogger()
 
 
-class LogContextManager:
+class ExtractLoggerContextManager:
 
     def __init__(self, scope, account=None, file=None):
         assert scope in ExtractLoggerScope.ALL
