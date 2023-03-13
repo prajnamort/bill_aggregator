@@ -14,7 +14,7 @@ Now, he wants to do a bookkeeping for his recent transactions.
 
 ## 1. Download the bills
 
-First, he logs in to these banks' website and downloads the transactions (in CSV format):
+First, he logs in to these banks' website and downloads the transactions:
 
 - [examples/BMO_Chequing.csv](./BMO_Chequing.csv)<br>
   <img src="./pictures/BMO_Chequing.jpg" width="800px">
@@ -22,8 +22,6 @@ First, he logs in to these banks' website and downloads the transactions (in CSV
   <img src="./pictures/BMO_Credit.jpg" width="574px">
 - [examples/CIBC_Chequing.csv](./CIBC_Chequing.csv)<br>
   <img src="./pictures/CIBC_Chequing.jpg" width="601px">
-
-(For privacy reason, sensitive information in these bills have been edited.)
 
 ## 2. Edit the config
 
@@ -102,8 +100,6 @@ All set. He runs the program:
 The result is a clean and beautiful Excel table ([examples/results/RESULT.xlsx](./results/RESULT.xlsx)):
 
 ![result.jpg](./pictures/result.jpg "Excel Table")
-
-## Further more
 
 After this, Jon can easily add [PivotTables](https://support.microsoft.com/en-us/office/create-a-pivottable-to-analyze-worksheet-data-a9a84538-bfe9-40a9-a8e9-f99134456576)
 and [Doughnut Charts](https://support.microsoft.com/en-us/office/add-a-pie-chart-1a5f08ae-ba40-46f2-9ed0-ff84873b7863#__toc348714905)

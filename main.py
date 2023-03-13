@@ -39,7 +39,7 @@ def main():
     config_util.ConfigValidator.validate_general_config(conf=conf)
 
     # actual work begins here
-    aggregator = BillAggregator(conf=conf, workdir=workdir)
+    aggregator = BillAggregator(conf=conf, workdir=workdir, conf_file=config_file)
     aggregator.extract_bills()
     aggregator.aggregate_bills()
     aggregator.export_bills()

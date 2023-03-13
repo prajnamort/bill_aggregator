@@ -9,6 +9,8 @@ Transform and aggregate all kinds of bills into a unified, beautiful Excel Table
 
 For a real-world example, see [Examples](/examples).
 
+<img src="./examples/pictures/demo.jpg">
+
 ## Installation
 
 Clone this repository:
@@ -54,8 +56,8 @@ Edit the config file:
 
 How to write the config?
 
-- For well-known bank accounts, just copy config from [config_templates](/config_templates).<br>
-  (If your bank account can't be found here, you are more than welcome to contribute!)
+- For well-known bank accounts, just copy from [config_templates](/config_templates).<br>
+  (If you don't find your bank here, you are welcome to share your config)
 - For a detailed documentation, see [configuration.md](/configuration.md).
 
 ### 3. Run the program

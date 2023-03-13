@@ -1,5 +1,5 @@
 from bill_aggregator.consts import (
-    DEFAULT_AGG, DEFAULT_SEP_CUR_AGG, FINAL_MEMO_SEPARATOR, FILE_EXTENSIONS,
+    DEFAULT_CONFIG_FILE, DEFAULT_AGG, DEFAULT_SEP_CUR_AGG, FINAL_MEMO_SEPARATOR, FILE_EXTENSIONS,
     ACCT, CUR, MEMO, DATE, TIME,
     ExtractLoggerScope, ExtractLoggerField, LogLevel, Color,
 )
@@ -13,9 +13,10 @@ from bill_aggregator.utils.string_util import fit_string, Align
 
 class BillAggregator:
 
-    def __init__(self, conf, workdir):
+    def __init__(self, conf, workdir, conf_file=None):
         self.conf = conf
         self.workdir = workdir
+        self.conf_file = conf_file
         self.bill_group_confs = self.conf['bill_groups']
         self.separate_by_currency = self.conf.get('separate_by_currency', False)
         self.export_type = self.conf['export_to']
@@ -110,6 +111,11 @@ class BillAggregator:
                 continue
             if path in self.handled_files:
                 continue
+            if path == self.conf_file:
+                continue
+            if path.name in [DEFAULT_CONFIG_FILE, 'Readme.md']:
+                continue
+
             extract_logger.log(
                 ExtractLoggerScope.GROUP, ExtractLoggerField.ACCT, value='N/A')
             extract_logger.log(
@@ -154,7 +160,7 @@ class BillAggregator:
         # logging
         dest_str = fit_string('Export destination', width=30)
         rows_str = fit_string('Items', width=5, align=Align.RIGHT)
-        print(f'{Color.HEADER}{dest_str} {rows_str}{Color.ENDC}')
+        print(f'{Color.HEADER}{dest_str}   {rows_str}{Color.ENDC}')
 
         # exporting
         ExporterCls = ExporterClsMapping[self.export_type]

@@ -325,4 +325,4 @@ class XlsxExporter:
         rows_str = str(len(self.data))
         dest_str = fit_string(dest_str, width=30)
         rows_str = fit_string(rows_str, width=5, align=Align.RIGHT)
-        print(f'{Color.OKCYAN}{dest_str}{Color.ENDC} {Color.OKGREEN}{rows_str}{Color.ENDC}')
+        print(f'{Color.OKCYAN}{dest_str}{Color.ENDC}   {Color.OKGREEN}{rows_str}{Color.ENDC}')
