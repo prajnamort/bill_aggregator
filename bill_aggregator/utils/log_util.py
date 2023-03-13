@@ -119,7 +119,7 @@ class ExtractLogger:
         grp_str = fit_string("Bill Group", self.GRP_WD)
         file_str = fit_string('Bill File', self.FILE_WD)
         rows_str = fit_string('Items', self.ROWS_WD, align=Align.RIGHT)
-        msg_str = fit_string('Messages', self.MSG_WD)
+        msg_str = 'Messages'
         print(self.LINE_FORMAT.format(
             grp_str=f'{Color.HEADER}{grp_str}{Color.ENDC}',
             file_str=f'{Color.HEADER}{file_str}{Color.ENDC}',
