@@ -297,7 +297,7 @@ class CsvExtractor(TabularExtractor):
                 raise BillAggException('Cannot detect encoding')
 
             # logging
-            msg = f'Detected encoding: {result.encoding} (confidence: {1.0 - result.chaos:.2})'
+            msg = f'Detected encoding: {result.encoding}{" (with BOM)" if result.bom else ""}'
             extract_logger.log(ExtractLoggerScope.FILE, ExtractLoggerField.MSG, value=msg)
 
             file_func = partial(StringIO, str(result))

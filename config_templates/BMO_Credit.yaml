@@ -2,6 +2,7 @@
     currency: "CAD"
     file_type: csv
     file_config:
+      # encoding: "utf-8-sig"
       has_header: true
       fields:
         date:
