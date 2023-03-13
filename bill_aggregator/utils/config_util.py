@@ -166,5 +166,5 @@ class ConfigValidator:
 
 
 def load_yaml_config(file=DEFAULT_CONFIG_FILE):
-    with open(file, 'r') as f:
+    with open(file, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
