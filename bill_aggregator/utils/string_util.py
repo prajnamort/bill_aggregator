@@ -81,6 +81,7 @@ def wrap_string(string, width=70, long_word_tolerance=20):
     assert long_word_tolerance >= 1
     assert width > long_word_tolerance, 'width > long_word_tolerance'
 
+    string = string.replace('\n', ' ')
     if string_width(string) <= width:
         return [string]
 

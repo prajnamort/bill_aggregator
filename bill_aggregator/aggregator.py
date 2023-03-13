@@ -3,9 +3,10 @@ from bill_aggregator.consts import (
     ACCT, CUR, MEMO, DATE, TIME,
     ExtractLoggerScope, ExtractLoggerField, LogLevel, Color,
 )
-from bill_aggregator.exceptions import BillAggException
+from bill_aggregator.exceptions import BillAggConfigError
 from bill_aggregator.extractors import ExtractorClsMapping
 from bill_aggregator.exporters import ExporterClsMapping
+from bill_aggregator.utils.config_util import ConfigValidator
 from bill_aggregator.utils.log_util import extract_logger, ExtractLoggerContextManager
 from bill_aggregator.utils.string_util import fit_string, Align
 
@@ -30,7 +31,7 @@ class BillAggregator:
         for f in field_list:
             for row in results:
                 if f not in row:
-                    raise BillAggException(f'Config error, unknown field in final_memo: {f}')
+                    raise BillAggConfigError(f'Config error, unknown field in final_memo: {f}')
 
         for row in results:
             memo = FINAL_MEMO_SEPARATOR.join(row[f] for f in field_list if row[f])
@@ -54,9 +55,13 @@ class BillAggregator:
         return extractor.results.copy()
 
     def extract_bill_group(self, bill_group_conf):
+        if ACCT not in bill_group_conf:
+            raise BillAggConfigError('Config error, no account field')
         account = bill_group_conf[ACCT]
 
         with ExtractLoggerContextManager(scope=ExtractLoggerScope.GROUP, account=account):
+            ConfigValidator.validate_bill_group_config(bill_group_conf)
+
             currency = bill_group_conf.get(CUR, None)
             file_type = bill_group_conf['file_type']
             file_conf = bill_group_conf['file_config']
@@ -144,10 +149,14 @@ class BillAggregator:
     def export_bills(self):
         # logging
         print()
+        # check export config
+        ConfigValidator.validate_export_config(conf=self.conf)
+        # logging
         dest_str = fit_string('Export destination', width=30)
         rows_str = fit_string('Items', width=5, align=Align.RIGHT)
         print(f'{Color.HEADER}{dest_str} {rows_str}{Color.ENDC}')
 
+        # exporting
         ExporterCls = ExporterClsMapping[self.export_type]
         for aggregation, results in self.aggregated_results.items():
             exporter = ExporterCls(

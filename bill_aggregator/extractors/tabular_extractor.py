@@ -12,7 +12,7 @@ from bill_aggregator.consts import (
     FIELDS, EXT_FIELDS, COL, FORMAT, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE,
     ExtractLoggerScope, ExtractLoggerField,
 )
-from bill_aggregator.exceptions import BillAggException
+from bill_aggregator.exceptions import BillAggException, BillAggConfigError
 from bill_aggregator.utils import amount_util
 from bill_aggregator.utils.log_util import extract_logger
 from .base_extractor import BaseExtractor
@@ -60,20 +60,20 @@ class TabularExtractor(BaseExtractor):
         """Check if column exist, return column number as integer."""
         if isinstance(col, int):
             if col >= self.column_count:
-                raise BillAggException(f'Config Error, no such column: {col}, ' \
-                                       f'available columns: 0-{self.column_count-1}')
+                raise BillAggConfigError(f'Config Error, no such column: {col}, ' \
+                                         f'available columns: 0-{self.column_count-1}')
             return col
         elif isinstance(col, str):
             match_column_count = self.header_row.count(col)
             if match_column_count == 0:
-                raise BillAggException(f'Config Error, no such column: "{col}", ' \
-                                       f'available columns: {self.header_row}')
+                raise BillAggConfigError(f'Config Error, no such column: "{col}", ' \
+                                         f'available columns: {self.header_row}')
             elif match_column_count >= 2:
                 raise BillAggException(f'Multiple Column "{col}" exists')
             return self.header_row.index(col)
         elif isinstance(col, list):
             return [self._check_column(c) for c in col]
-        raise BillAggException(f'Config Error, unrecognized column indicator: {col}')
+        raise BillAggConfigError(f'Config Error, unrecognized column indicator: {col}')
 
     def _check_and_update_config(self):
         """Check config against the actual data, update config if needed."""
@@ -242,7 +242,7 @@ class TabularExtractor(BaseExtractor):
         elif amt_format == AmountFormat.TWO_COLUMNS:
             self._process_two_cols_amt_fields()
         else:
-            raise BillAggException(f'Config Error, invalid amount format: {amt_format}')
+            raise BillAggConfigError(f'Config Error, invalid amount format: {amt_format}')
 
     def _process_extra_fields(self):
         if EXT_FIELDS not in self.file_conf:
@@ -346,8 +346,8 @@ class XlsExtractor(TabularExtractor):
         total_skiprows = self.skiprows + self.skipfooters
 
         if start > end:
-            raise BillAggException(f'Config Error, need to skip {total_skiprows} rows, ' \
-                                   f'only {sheet.nrows} rows found')
+            raise BillAggConfigError(f'Config Error, need to skip {total_skiprows} rows, ' \
+                                     f'only {sheet.nrows} rows found')
 
         results = []
         for i in range(start, end+1):

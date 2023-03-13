@@ -1,3 +1,5 @@
+from functools import wraps
+
 import yaml
 from schema import Schema, Or, Optional, SchemaError
 
@@ -5,13 +7,13 @@ from bill_aggregator.consts import (
     DEFAULT_CONFIG_FILE, FileType, AmountFormat, ExportType,
     FIELDS, EXT_FIELDS, COL, FORMAT, ACCT, CUR, DATE, TIME, NAME, MEMO, AMT,
 )
-from bill_aggregator.exceptions import BillAggException
+from bill_aggregator.exceptions import BillAggConfigError
 
 
 config_schema = Schema({
     'bill_groups': list,    # bill_group_schema
     Optional('separate_by_currency'): bool,
-    'export_to': Or(ExportType.XLSX),
+    'export_to': str,
     'export_config': dict,    # one of export_config_schemas
 })
 
@@ -89,44 +91,43 @@ export_config_schemas = {
         Optional('font_size'): int,
         Optional('row_height'): int,
         Optional('table_style'): str,
-        'columns': list,    # column_config_schema
+        'columns': [{
+            'header': str,
+            'data': dict,
+            Optional('style'): dict,
+        }],
     }),
 }
 
-column_config_schema = Schema({
-    'header': str,
-    'data': dict,
-    Optional('style'): dict,
-})
+
+def config_validation_wrapper(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except SchemaError as exc:
+            message = 'Config Error'
+            se_msg = '\n'.join(msg for msg in [*exc.autos, *exc.errors] if msg)
+            if se_msg:
+                message = message + '. ' + se_msg
+            raise BillAggConfigError(message) from exc
+    return wrapper
 
 
 class ConfigValidator:
 
     @classmethod
-    def validate_config(cls, conf):
-        try:
-            config_schema.validate(conf)
-
-            # validate config for reading original files
-            for bill_group_conf in conf['bill_groups']:
-                cls.validate_bill_group_config(bill_group_conf)
-
-            # validate config for exporting results
-            export_type = conf['export_to']
-            if export_type not in ExportType.ALL:
-                raise BillAggException(f'Invalid export type: {export_type}')
-            cls.validate_export_config(export_type, conf['export_config'])
-
-            # print("Configuration is valid.")
-        except SchemaError as se:
-            raise se
+    @config_validation_wrapper
+    def validate_general_config(cls, conf):
+        config_schema.validate(conf)
 
     @classmethod
+    @config_validation_wrapper
     def validate_bill_group_config(cls, bill_group_conf):
         bill_group_schema.validate(bill_group_conf)
         file_type = bill_group_conf['file_type']
         if file_type not in FileType.ALL:
-            raise BillAggException(f'Invalid file_type: {file_type}')
+            raise BillAggConfigError(f'Config Error, invalid file_type: {file_type}')
 
         file_conf = bill_group_conf['file_config']
         if file_type in [FileType.CSV, FileType.XLS]:
@@ -135,19 +136,33 @@ class ConfigValidator:
             cls.validate_amount_config(file_conf[FIELDS][AMT])
 
     @classmethod
+    @config_validation_wrapper
     def validate_amount_config(cls, amt_conf):
         if FORMAT not in amt_conf:
-            raise BillAggException('Format must be specified for amount field')
+            raise BillAggConfigError('Config Error, format must be specified for amount field')
         amt_format = amt_conf[FORMAT]
         if amt_format not in AmountFormat.ALL:
-            raise BillAggException(f'Invalid format for amount field: {amt_format}')
+            raise BillAggConfigError(f'Config Error, invalid format for amount field: {amt_format}')
         amount_config_schemas[amt_format].validate(amt_conf)
 
     @classmethod
-    def validate_export_config(cls, export_type, export_conf):
+    @config_validation_wrapper
+    def validate_export_config(cls, conf):
+        export_type = conf['export_to']
+        if export_type not in ExportType.ALL:
+            raise BillAggConfigError(f'Config Error, invalid export_type: {export_type}')
+
+        export_conf = conf['export_config']
         export_config_schemas[export_type].validate(export_conf)
-        for column_config in export_conf['columns']:
-            column_config_schema.validate(column_config)
+
+    @classmethod
+    @config_validation_wrapper
+    def validate_all_config(cls, conf):
+        cls.validate_general_config(conf)
+        for bill_group_conf in conf['bill_groups']:
+            cls.validate_bill_group_config(bill_group_conf)
+        cls.validate_export_config(conf)
+        print("Configuration is valid.")
 
 
 def load_yaml_config(file=DEFAULT_CONFIG_FILE):

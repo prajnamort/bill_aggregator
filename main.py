@@ -4,6 +4,7 @@ import pathlib
 import sys
 
 from bill_aggregator import consts
+from bill_aggregator.exceptions import BillAggConfigError
 from bill_aggregator.utils import config_util
 from bill_aggregator.aggregator import BillAggregator
 
@@ -35,7 +36,7 @@ def main():
 
     # load and validate config file
     conf = config_util.load_yaml_config(file=config_file)
-    config_util.ConfigValidator.validate_config(conf=conf)
+    config_util.ConfigValidator.validate_general_config(conf=conf)
 
     # actual work begins here
     aggregator = BillAggregator(conf=conf, workdir=workdir)
@@ -45,4 +46,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except BillAggConfigError as exc:
+        print(f'{consts.Color.ERROR}{exc.message}{consts.Color.ENDC}')
+        sys.exit(1)

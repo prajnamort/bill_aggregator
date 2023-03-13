@@ -8,7 +8,7 @@ from bill_aggregator.consts import (
     AmountType, RESULTS_DIR,
     ACCT, CUR, DATE, TIME, NAME, MEMO, AMT, AMT_TYPE,
     Color)
-from bill_aggregator.exceptions import BillAggException
+from bill_aggregator.exceptions import BillAggConfigError
 from bill_aggregator.utils.string_util import fit_string, Align
 
 
@@ -229,7 +229,7 @@ class XlsxExporter:
         elif data_type == 'custom':
             return CustomColumn
         else:
-            raise BillAggException(f'Invalid data type: {data_type}')
+            raise BillAggConfigError(f'Config error, invalid column data type: {data_type}')
 
     def init_workbook(self):
         nrows = len(self.data) + HEADER_ROWS
@@ -294,9 +294,9 @@ class XlsxExporter:
             elif isinstance(column, AmountTypeColumn):
                 amount_type_column = column
         if (amount_column is not None) and (amount_type_column is None):
-            raise BillAggException(
-                'You must export "amount_type" with "amount" together, '
-                'since amount_type is sometimes unknown.'
+            raise BillAggConfigError(
+                'Config error, you must export "amount_type" with "amount" together '
+                '(since amount_type is sometimes unknown)'
             )
         cell_string = xl_rowcol_to_cell(HEADER_ROWS, amount_type_column.col_idx)
         self.worksheet.conditional_format(

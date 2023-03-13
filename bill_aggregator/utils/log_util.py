@@ -1,7 +1,7 @@
 from bill_aggregator.consts import (
     LogLevel, ExtractLoggerScope, ExtractLoggerField, Color,
 )
-from bill_aggregator.exceptions import BillAggBaseException, BillAggException
+from bill_aggregator.exceptions import BillAggBaseException
 from bill_aggregator.utils.string_util import Align, fit_string, wrap_string
 
 
@@ -306,8 +306,7 @@ class ExtractLoggerContextManager:
             if isinstance(exc_val, BillAggBaseException):
                 message = exc_val.message
             else:
-                message = str(exc_val)
-            message = message or 'Un-specified Error'
+                message = f'{exc_type.__name__}: {str(exc_val)}'
 
             extract_logger.log(self.scope, ExtractLoggerField.MSG,
                                value=message, level=LogLevel.ERROR)
@@ -319,6 +318,6 @@ class ExtractLoggerContextManager:
             extract_logger.bill_file_ends()
 
         suppress = False
-        if exc_val is not None and isinstance(exc_val, BillAggException):
+        if exc_val is not None and isinstance(exc_val, BillAggBaseException):
             suppress = True
         return suppress

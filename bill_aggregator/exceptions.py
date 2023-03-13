@@ -5,9 +5,9 @@ class BillAggBaseException(Exception):
         self.message = message
 
 
-class BillAggError(BillAggBaseException):
+class BillAggConfigError(BillAggBaseException):
 
-    def __init__(self, message="An error occured"):
+    def __init__(self, message="Config Error"):
         super().__init__(message)
 
 
